@@ -3,13 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple GitHub Pages</title>
+    <title>RosimInc's Nonogram Café</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="scripts/main.js"></script>
 </head>
 <body>
-    <h1>RosimInc's SteamGifts Nonogram Solver</h1>
-    <p id="urlText">Loading...</p>
-    <button id="timeButton">Click me!</button>
-
-    <script src="scripts/main.js"></script>
+    <h1>RosimInc's Nonogram Café</h1>
+    <h2 id="subtitle"></h2>
+    <div id="solverDiv" style="display:none">
+        <div id="nonoDiv"></div>
+        <script src="scripts/nonogram.js"></script>
+        <button id="timeButton">Click me!</button>
+    </div>
+    <div id="creatorDiv" style="display:none">
+        <form id="simpleForm">
+            <label for="name">Name:</label><br>
+            <input type="text" id="name" name="name" required><br><br>
+      
+            <label for="secretText">Secret Text:</label><br>
+            <input type="text" id="secretText" name="secretText" required><br><br>
+            
+            <label for="width">Width (5-40):</label><br>
+            <input type="number" id="width" name="width" min="5" max="40" required><br><br>
+            
+            <label for="height">Height (5-30):</label><br>
+            <input type="number" id="height" name="height" min="5" max="30" required><br><br>
+            
+            <button type="button">Create!</button>
+          </form>
+    </div>
 </body>
 </html>

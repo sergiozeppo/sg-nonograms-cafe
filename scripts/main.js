@@ -1,21 +1,16 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const button = document.getElementById("timeButton");
-    const urlText = document.getElementById("urlText");
-
+document.addEventListener('DOMContentLoaded', () => {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
+    let id = urlParams.get('id');
 
-    let url = urlParams.get('id');
-
-    urlText.textContent = `Wow: ${url ? url : "None..."}`;
-
-    if (button) {
-        const currentTime = new Date().toLocaleTimeString();
-        button.textContent = `Current Time: ${currentTime}`;
-
-        button.addEventListener("click", () => {
-            const updatedTime = new Date().toLocaleTimeString();
-            button.textContent = `Current Time: ${updatedTime}`;
-        });
-    }
+    if(id) setupSolver(id);
+    else setupCreator();
 });
+
+function setupSolver(id) {
+    document.getElementById('solverDiv').style.display = 'block';
+}
+
+function setupCreator() {
+    document.getElementById('creatorDiv').style.display = 'block';
+}
