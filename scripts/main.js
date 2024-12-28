@@ -1,18 +1,21 @@
-// Access utilities from utils.js
-const { getQueryParam, getPathSegment } = window.utils;
-
-// Main logic
 document.addEventListener("DOMContentLoaded", () => {
-    const id = getQueryParam('id');
-    const customPath = getPathSegment(2); // Split path segment
+    const button = document.getElementById("timeButton");
+    const urlText = document.getElementById("urlText");
 
-    const contentElement = document.getElementById('content');
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
 
-    if (id) {
-        contentElement.textContent = `ID Parameter: ${id}`;
-    } else if (customPath) {
-        contentElement.textContent = `Custom Path: ${customPath}`;
-    } else {
-        contentElement.textContent = 'No customization provided.';
+    let url = urlParams.get('id');
+
+    urlText.textContent = `Wow: ${url ? url : "None..."}`;
+
+    if (button) {
+        const currentTime = new Date().toLocaleTimeString();
+        button.textContent = `Current Time: ${currentTime}`;
+
+        button.addEventListener("click", () => {
+            const updatedTime = new Date().toLocaleTimeString();
+            button.textContent = `Current Time: ${updatedTime}`;
+        });
     }
 });
