@@ -44,6 +44,37 @@ let movesUndo = [];
 let movesRedo = [];
 let ended = false;
 
+let id = 0;
+
+const URL = `https://rosiminc.github.io/sg-nonograms/`;
+
+// Load id
+document.addEventListener('DOMContentLoaded', () => {
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    id = urlParams.get('id') || getRandomId();
+    numCols = parseInt(urlParams.get('w')) || 10;
+    numRows = parseInt(urlParams.get('h')) || 10;
+
+    let urlField = document.getElementById('url')
+    urlField.value = `${URL}?id=${id}&w=${numCols}&h=${numRows}`;
+});
+
+function getRandomId() {
+    let str = '';
+    for (let i = 0; i < 5; i++) {
+        let num = Math.floor(Math.random() * 62);
+        str += num < 26 ? String.fromCharCode('a'.charCodeAt(0) + num) : // a-z
+            num < 52 ? String.fromCharCode('A'.charCodeAt(0) + num - 26) : // A-Z
+            String.fromCharCode('0'.charCodeAt(0) + num - 52); // 0-9
+    }
+    return str;
+}
+
+// Remove right click menu
+document.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+});
 
 function setup() {
     const canvas = createCanvas(500, 300);
@@ -63,8 +94,8 @@ function setup() {
 
     loadHints();
 
-    resize();
     createGrid();
+    resize();
 }
 
 function resize() {
@@ -74,7 +105,7 @@ function resize() {
 
 function loadHints() {
     console.log(`Id: ${id}`)
-    const infos = getPlayerFromId(id);
+    const infos = getPlayerFromId(id, numCols, numRows);
 
     numRows = infos.numRows;
     numCols = infos.numCols;
@@ -138,7 +169,7 @@ function draw() {
     mouseMoved();
 
     scale(zoom);
-    background(225);
+    background(ended ? color(100, 200, 100) : color(225));
 
     translate(margin, margin);
     translate(maxHorHints * cellSize, maxVerHints * cellSize);
@@ -246,9 +277,9 @@ function drawPosHighlight() {
     }
     
     if(mouseInfo.inGridX && (mouseInfo.inGridY || mouseInfo.inHintsY)) {
-        //let numHints = 
-        rect(mouseInfo.mouseCol * cellSize - 1, -maxVerHints * cellSize - 1,
-            cellSize + 2, (maxVerHints + numRows) * cellSize + 2);
+        let numHints = verHints[mouseInfo.mouseCol].length
+        rect(mouseInfo.mouseCol * cellSize - 1, -numHints * cellSize - 1,
+            cellSize + 2, (numHints + numRows) * cellSize + 2);
     }
 }
 
@@ -500,4 +531,3 @@ function keyPressed() {
         zoomOut();
     }
 }
-    //document.querySelector('h1').textContent = "Wow!";
