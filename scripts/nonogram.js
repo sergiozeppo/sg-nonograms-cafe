@@ -1,6 +1,18 @@
-let margin = 25;
-let cellSize = 24;
-let hintOffset = 8;
+const MOUSE_NONE = 0;
+const MOUSE_LEFT = 1;
+const MOUSE_RIGHT = 2;
+const MOUSE_MID = 3;
+
+const TYPE_CELL = 0;
+const TYPE_HOR_HINT = 1;
+const TYPE_VER_HINT = 2;
+
+const ZOOM_FACTOR = 1.2;
+
+let zoom = 1;
+
+let margin = 12;
+let cellSize = 30;
 
 let numRows;
 let horHints;
@@ -11,11 +23,16 @@ let verHints;
 let maxVerHints;
 
 let grid;
+let gridHorHints;
+let gridVerHints;
 
 let cellColors;
-let hintColors;
 
-let mouseDown = false;
+let mouseDown = MOUSE_NONE; // None, Left, Right, Mid
+let filling;
+
+let movesUndo = [];
+let movesRedo = [];
 
 
 function setup() {
@@ -30,13 +47,15 @@ function setup() {
         color(165,215,200)   // Green 2
     ];
 
-    hintColors = [
-        color(230,230,230),  // Gray 1
-        color(200,200,200)   // Gray 2
-    ];
-
     loadHints();
+
+    resize();
     createGrid();
+}
+
+function resize() {
+    resizeCanvas(zoom * (2 * margin + (maxHorHints + numCols) * cellSize),
+        zoom * (2 * margin + (maxVerHints + numRows) * cellSize));
 }
 
 function loadHints() {
@@ -69,16 +88,30 @@ function loadHints() {
 
     maxHorHints = countMaxHints(horHints);
     maxVerHints = countMaxHints(verHints);
-
-    console.log(maxVerHints);
-
-    resizeCanvas(2 * margin + hintOffset + (maxHorHints + numCols) * cellSize,
-        2 * margin + hintOffset + (maxVerHints + numRows) * cellSize);
 }
 
 function createGrid() {
     grid = Array.from({ length: numRows }, () => Array(numCols).fill(0));
-    console.log(grid);
+
+    gridHorHints = [];
+    for(let hints of horHints)
+        gridHorHints.push(Array(hints.length).fill(0));
+
+    gridVerHints = [];
+    for(let hints of verHints)
+        gridVerHints.push(Array(hints.length).fill(0));
+
+    // Tests TODO Rem
+
+    grid[0][3] = 1;
+    grid[1][3] = 1;
+    grid[2][3] = 1;
+    grid[2][4] = 1;
+    grid[0][6] = 2;
+
+    gridHorHints[0][1] = 1;
+    gridHorHints[5][0] = 1;
+    gridVerHints[2][1] = 1;
 }
 
 function countMaxHints(hints) {
@@ -92,26 +125,38 @@ function countMaxHints(hints) {
 }
 
 function draw() {
-    background(255);
+    scale(zoom);
+    background(225);
 
     translate(margin, margin);
     translate(maxHorHints * cellSize, maxVerHints * cellSize);
     
-    drawSolvingSection();
     drawHorHints();
     drawVerHints();
+    drawGrid();
 
     noStroke();
 }
 
-function drawSolvingSection() {
-    noStroke();
-    strokeWeight(1);
-    stroke(0,0,0);
+function drawGrid() {
+    stroke(0);
     for(let row = 0; row < numRows; row++) {
         for(let col = 0; col < numCols; col++) {
-            fill(cellColors[2 * ((floor(row/5) + floor(col/5)) % 2) + (row + col) % 2]);
+            let gridVal = grid[row][col];
+            let cellColor = cellColors[2 * ((floor(row/5) + floor(col/5)) % 2) + (row + col) % 2];
+            if(gridVal == 1) {
+                cellColor = lerpColor(cellColor, color('black'), 0.9);
+            } else if(gridVal == 2) {
+                cellColor = lerpColor(cellColor, color('white'), 0.5);
+            }
+
+            strokeWeight(1);
+            fill(cellColor);
             rect(col * cellSize, row * cellSize, cellSize, cellSize);
+
+            strokeWeight(5);
+            if(gridVal == 2)
+                point((col + 0.5) * cellSize, (row + 0.5) * cellSize);
         }
     }
 
@@ -137,13 +182,17 @@ function drawHorHints() {
             let hint = rowHints[i];
 
             noStroke();
-            fill(hintColors[floor(floor(numHints - 1 - i) % 2 + row) % 2]);
-            rect((i - numHints) * cellSize - hintOffset, row * cellSize, cellSize, cellSize);
-            
             fill(0);
             textSize(hint < 10 ? cellSize * 0.9 : cellSize * 0.7);
             textAlign(CENTER, CENTER);
-            text(hint, -(numHints - i - 0.5) * cellSize - hintOffset, (row + 0.5) * cellSize + 2);
+            text(hint, -(numHints - i - 0.5) * cellSize, (row + 0.5) * cellSize + 2);
+
+            if(gridHorHints[row][i] == 1) {
+                strokeWeight(3);
+                stroke(0, 200);
+                line((i - numHints) * cellSize + 2, row * cellSize + 6,
+                    (i - numHints + 1) * cellSize - 2, (row + 1) * cellSize - 6);
+            }
         }
     }
 }
@@ -157,22 +206,150 @@ function drawVerHints() {
             let hint = colHints[i];
 
             noStroke();
-            fill(hintColors[floor(floor(numHints - 1 - i) % 2 + col) % 2]);
-            rect(col * cellSize, (i - numHints) * cellSize - hintOffset, cellSize, cellSize);
-
-            noStroke();
             fill(0);
             textSize(hint < 10 ? cellSize * 0.9 : cellSize * 0.7);
             textAlign(CENTER, CENTER);
-            text(hint, (col + 0.5) * cellSize, -(numHints - i - 0.5) * cellSize - hintOffset + 2);
+            text(hint, (col + 0.5) * cellSize, -(numHints - i - 0.5) * cellSize + 2);
+            
+            if(gridVerHints[col][i] == 1) {
+                strokeWeight(3);
+                stroke(0, 200);
+                line(col * cellSize + 2, (i - numHints) * cellSize + 6,
+                    (col + 1) * cellSize - 2, (i - numHints + 1) * cellSize - 6);
+            }
         }
     }
 }
 
 function mousePressed() {
-    if(mouseX < 0 || mouseX < width ||
-        mouseY > 0 || mouseY < height)
+    if(mouseX < 0 || mouseX >= width || mouseY < 0 || mouseY >= height)
         return;
 
-    document.querySelector('h1').textContent = "Wow!";
+    let mouseCol = floor((mouseX/zoom - margin)/cellSize) - maxHorHints;
+    let mouseRow = floor((mouseY/zoom - margin)/cellSize) - maxVerHints;
+
+    let inGridX = (mouseCol >= 0 && mouseCol <= numCols);
+    let inHintsX = (mouseCol < 0 && mouseCol >= (-1-maxHorHints));
+    let inGridY = (mouseRow >= 0 && mouseRow <= numRows);
+    let inHintsY = (mouseRow < 0 && mouseRow >= (-1-maxVerHints));
+
+    if(inGridX) {
+        if(inGridY) { // Inside the grid
+            clickInGrid(mouseRow, mouseCol);
+        } else if(inHintsY) { // Inside the ver hints
+            clickInVerHints(-1-mouseRow, mouseCol);
+        }
+    } else if(inHintsX && inGridY) { // Inside the hor hints
+        clickInHorHints(mouseRow, -1-mouseCol);
+    }
 }
+
+function clickInGrid(mouseRow, mouseCol) {
+    let currVal = grid[mouseRow][mouseCol];
+    let nextVal = 0;
+
+    if(mouseButton == LEFT) {
+        nextVal = currVal == 1 ? 0 : 1;
+    } else if(mouseButton == RIGHT) {
+        nextVal = currVal == 2 ? 0 : 2;
+    }
+
+    if(nextVal != currVal)
+        doAction({type: TYPE_CELL, row: mouseRow, col: mouseCol,
+        from: currVal, to: nextVal});
+}
+
+function clickInHorHints(mouseRow, mouseCol) {
+    let hints = gridHorHints[mouseRow];
+    let num = hints.length;
+    if(mouseCol < num)
+        doAction({type: TYPE_HOR_HINT, row: mouseRow, num: num - mouseCol - 1});
+}
+
+function clickInVerHints(mouseRow, mouseCol) {
+    let hints = gridVerHints[mouseCol];
+    let num = hints.length;
+    if(mouseRow < num)
+        doAction({type: TYPE_VER_HINT, col: mouseCol, num: num - mouseRow - 1});
+}
+
+function doAction(action) {
+    apply(action);
+    movesUndo.push(action);
+    movesRedo = [];
+}
+
+function undo() {
+    if(movesUndo.length == 0)
+        return;
+    let action = movesUndo.pop();
+    unapply(action);
+    movesRedo.push(action);
+}
+
+function redo() {
+    if(movesRedo.length == 0)
+        return;
+    let action = movesRedo.pop();
+    apply(action);
+    movesUndo.push(action);
+}
+
+function apply(action) {
+    if(action.type == TYPE_CELL) {
+        grid[action.row][action.col] = action.to;
+    } else if(action.type == TYPE_HOR_HINT) {
+        let hints = gridHorHints[action.row];
+        hints[action.num] = 1 - hints[action.num];
+    } else if(action.type == TYPE_VER_HINT) {
+        let hints = gridVerHints[action.col];
+        hints[action.num] = 1 - hints[action.num];
+    }
+}
+
+function unapply(action) {
+    if(action.type == TYPE_CELL) {
+        grid[action.row][action.col] = action.from;
+    } else if(action.type == TYPE_HOR_HINT) {
+        let hints = gridHorHints[action.row];
+        hints[action.num] = 1 - hints[action.num];
+    } else if(action.type == TYPE_VER_HINT) {
+        let hints = gridVerHints[action.col];
+        hints[action.num] = 1 - hints[action.num];
+    }
+}
+
+function displayGrid() {
+    let str = '';
+    for(let row = 0; row < numRows; row++) {
+        for(let col = 0; col < numCols; col++) {
+            let val = grid[row][col];
+            str += val == 0 ? '  ' : val == 1 ? ' X' : ' .';
+        }
+        str += '\n';
+    }
+    console.log(str);
+}
+
+function zoomIn() {
+    zoom *= ZOOM_FACTOR;
+    resize();
+}
+
+function zoomOut() {
+    zoom /= ZOOM_FACTOR;
+    resize();
+}
+
+function keyPressed() {
+    if (keyCode === RIGHT_ARROW || (key === 'y' && keyIsDown(CONTROL))) {
+        redo();
+    } else if (keyCode === LEFT_ARROW || (key === 'z' && keyIsDown(CONTROL))) {
+        undo();
+    } else if (keyCode === UP_ARROW || key === '+' ) {
+        zoomIn();
+    } else if (keyCode === DOWN_ARROW || key === '-' ) {
+        zoomOut();
+    }
+}
+    //document.querySelector('h1').textContent = "Wow!";

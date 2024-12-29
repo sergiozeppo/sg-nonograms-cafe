@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
     else setupCreator();
 });
 
+document.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+});
+
 function setupSolver(id) {
     document.getElementById('solverDiv').style.display = 'block';
 }
