@@ -146,6 +146,7 @@ function draw() {
     drawHorHints();
     drawVerHints();
     drawGrid();
+    drawPosHighlight();
 }
 
 function drawGrid() {
@@ -233,16 +234,34 @@ function drawVerHints() {
     }
 }
 
+function drawPosHighlight() {
+    const mouseInfo = getMouseInfo();
+    noStroke();
+    fill(0, 70);
+    
+    if(mouseInfo.inGridY && (mouseInfo.inGridX || mouseInfo.inHintsX)) {
+        let numHints = horHints[mouseInfo.mouseRow].length;
+        rect(-numHints * cellSize - 1, mouseInfo.mouseRow * cellSize - 1,
+            (numHints + numCols) * cellSize + 2, cellSize + 2);
+    }
+    
+    if(mouseInfo.inGridX && (mouseInfo.inGridY || mouseInfo.inHintsY)) {
+        //let numHints = 
+        rect(mouseInfo.mouseCol * cellSize - 1, -maxVerHints * cellSize - 1,
+            cellSize + 2, (maxVerHints + numRows) * cellSize + 2);
+    }
+}
+
 function getMouseInfo() {
     let inCanvas = !(mouseX < 0 || mouseX >= width || mouseY < 0 || mouseY >= height);;
 
     let mouseCol = floor((mouseX/zoom - margin)/cellSize) - maxHorHints;
     let mouseRow = floor((mouseY/zoom - margin)/cellSize) - maxVerHints;
 
-    let inGridX = (mouseCol >= 0 && mouseCol <= numCols);
-    let inHintsX = (mouseCol < 0 && mouseCol >= (-1-maxHorHints));
-    let inGridY = (mouseRow >= 0 && mouseRow <= numRows);
-    let inHintsY = (mouseRow < 0 && mouseRow >= (-1-maxVerHints));
+    let inGridX = (mouseCol >= 0 && mouseCol < numCols);
+    let inHintsX = (mouseCol < 0 && mouseCol > (-1-maxHorHints));
+    let inGridY = (mouseRow >= 0 && mouseRow < numRows);
+    let inHintsY = (mouseRow < 0 && mouseRow > (-1-maxVerHints));
 
     return { mouseCol, mouseRow, inCanvas,
         inGridX, inGridY, inHintsX, inHintsY
