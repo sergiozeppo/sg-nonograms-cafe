@@ -13,8 +13,8 @@ function getPlayerFromId(id) {
     // Extract numCols
     // Extract encoded
 
-    let numRows = 8;
-    let numCols = 12;
+    let numRows = 15;
+    let numCols = 15;
 
     const seed = getSeedFromValues(numRows, numCols, id);
     const infos = generateHints(numRows, numCols, seed);

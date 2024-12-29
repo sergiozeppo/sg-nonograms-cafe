@@ -6,6 +6,7 @@ const MOUSE_MID = 3;
 const TYPE_CELL = 0;
 const TYPE_HOR_HINT = 1;
 const TYPE_VER_HINT = 2;
+const TYPE_GROUP = 3;
 
 const CELL_EMPTY = 0;
 const CELL_BLACK = 1;
@@ -37,6 +38,7 @@ let cellColors;
 
 let mouseDown = MOUSE_NONE; // None, Left, Right, Mid
 let filling;
+let currAction;
 
 let movesUndo = [];
 let movesRedo = [];
@@ -133,6 +135,8 @@ function countMaxHints(hints) {
 }
 
 function draw() {
+    mouseMoved();
+
     scale(zoom);
     background(225);
 
@@ -142,8 +146,6 @@ function draw() {
     drawHorHints();
     drawVerHints();
     drawGrid();
-
-    noStroke();
 }
 
 function drawGrid() {
@@ -231,9 +233,8 @@ function drawVerHints() {
     }
 }
 
-function mousePressed() {
-    if(mouseX < 0 || mouseX >= width || mouseY < 0 || mouseY >= height)
-        return;
+function getMouseInfo() {
+    let inCanvas = !(mouseX < 0 || mouseX >= width || mouseY < 0 || mouseY >= height);;
 
     let mouseCol = floor((mouseX/zoom - margin)/cellSize) - maxHorHints;
     let mouseRow = floor((mouseY/zoom - margin)/cellSize) - maxVerHints;
@@ -243,30 +244,77 @@ function mousePressed() {
     let inGridY = (mouseRow >= 0 && mouseRow <= numRows);
     let inHintsY = (mouseRow < 0 && mouseRow >= (-1-maxVerHints));
 
-    if(inGridX) {
-        if(inGridY) { // Inside the grid
-            clickInGrid(mouseRow, mouseCol);
-        } else if(inHintsY) { // Inside the ver hints
-            clickInVerHints(-1-mouseRow, mouseCol);
+    return { mouseCol, mouseRow, inCanvas,
+        inGridX, inGridY, inHintsX, inHintsY
+    };
+}
+
+function mousePressed() {
+    const mouseInfo = getMouseInfo();
+    if(!mouseInfo.inCanvas)
+        return;
+
+    if(mouseInfo.inGridX) {
+        if(mouseInfo.inGridY) { // Inside the grid
+            clickInGrid(mouseInfo.mouseRow, mouseInfo.mouseCol);
+        } else if(mouseInfo.inHintsY) { // Inside the ver hints
+            clickInVerHints(-1 - mouseInfo.mouseRow, mouseInfo.mouseCol);
         }
-    } else if(inHintsX && inGridY) { // Inside the hor hints
-        clickInHorHints(mouseRow, -1-mouseCol);
+    } else if(mouseInfo.inHintsX && mouseInfo.inGridY) { // Inside the hor hints
+        clickInHorHints(mouseInfo.mouseRow, -1 - mouseInfo.mouseCol);
+    }
+}
+
+function mouseReleased() {
+    let btn = MOUSE_NONE;
+    if(mouseButton == LEFT)
+        btn = MOUSE_LEFT;
+    else if(mouseButton == RIGHT)
+        btn = MOUSE_RIGHT;
+    else if(mouseButton == CENTER)
+        btn = MOUSE_MID;
+
+    if(btn == mouseDown) {
+        mouseDown = MOUSE_NONE;
+    }
+}
+
+function mouseMoved() {
+    if(mouseDown == MOUSE_NONE)
+        return;
+
+    const mouseInfo = getMouseInfo();
+    if(mouseInfo.inGridX && mouseInfo.inGridY) {
+        let currVal = grid[mouseInfo.mouseRow][mouseInfo.mouseCol];
+        if(filling != currVal) {
+            addSubAction({type: TYPE_CELL, row: mouseInfo.mouseRow, col: mouseInfo.mouseCol,
+                from: currVal, to: filling});
+        }
     }
 }
 
 function clickInGrid(mouseRow, mouseCol) {
     let currVal = grid[mouseRow][mouseCol];
     let nextVal = 0;
+    let btn = MOUSE_NONE;
 
     if(mouseButton == LEFT) {
+        btn = MOUSE_LEFT;
         nextVal = currVal == CELL_BLACK ? CELL_EMPTY : CELL_BLACK;
     } else if(mouseButton == RIGHT) {
+        btn = MOUSE_RIGHT;
         nextVal = currVal == CELL_WHITE ? CELL_EMPTY : CELL_WHITE;
+    } else if(mouseButton == CENTER) {
+        btn = MOUSE_MID;
     }
 
-    if(nextVal != currVal)
-        doAction({type: TYPE_CELL, row: mouseRow, col: mouseCol,
-        from: currVal, to: nextVal});
+    if(nextVal != currVal) {
+        mouseDown = btn;
+        filling = nextVal;
+        doAction({type: TYPE_GROUP, subs: []});
+        addSubAction({type: TYPE_CELL, row: mouseRow, col: mouseCol,
+            from: currVal, to: nextVal});
+    }
 }
 
 function clickInHorHints(mouseRow, mouseCol) {
@@ -283,13 +331,23 @@ function clickInVerHints(mouseRow, mouseCol) {
         doAction({type: TYPE_VER_HINT, col: mouseCol, num: num - mouseRow - 1});
 }
 
-function doAction(action) {
+function addSubAction(action) {
     apply(action);
+    currAction.subs.push(action);
+}
+
+function doAction(action) {
+    if(action.type == TYPE_GROUP) {
+        currAction = action;
+    } else {
+        apply(action);
+    }
     movesUndo.push(action);
     movesRedo = [];
 }
 
 function undo() {
+    mouseDown = MOUSE_NONE;
     if(movesUndo.length == 0)
         return;
     let action = movesUndo.pop();
@@ -298,6 +356,7 @@ function undo() {
 }
 
 function redo() {
+    mouseDown = MOUSE_NONE;
     if(movesRedo.length == 0)
         return;
     let action = movesRedo.pop();
@@ -315,6 +374,9 @@ function apply(action) {
     } else if(action.type == TYPE_VER_HINT) {
         let hints = gridVerHints[action.col];
         hints[action.num] = 1 - hints[action.num];
+    } else if(action.type == TYPE_GROUP) {
+        for(let sub of action.subs)
+            apply(sub);
     }
 }
 
@@ -327,6 +389,9 @@ function unapply(action) {
     } else if(action.type == TYPE_VER_HINT) {
         let hints = gridVerHints[action.col];
         hints[action.num] = 1 - hints[action.num];
+    } else if(action.type == TYPE_GROUP) {
+        for(let sub of action.subs)
+            unapply(sub);
     }
 }
 
