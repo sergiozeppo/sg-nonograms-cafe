@@ -7,6 +7,10 @@ const TYPE_CELL = 0;
 const TYPE_HOR_HINT = 1;
 const TYPE_VER_HINT = 2;
 
+const CELL_EMPTY = 0;
+const CELL_BLACK = 1;
+const CELL_WHITE = 2;
+
 const ZOOM_FACTOR = 1.2;
 
 let zoom = 1;
@@ -33,6 +37,7 @@ let filling;
 
 let movesUndo = [];
 let movesRedo = [];
+let ended = false;
 
 
 function setup() {
@@ -59,6 +64,8 @@ function resize() {
 }
 
 function loadHints() {
+    // TODO Load grid
+
     numRows = 8;
     numCols = 10;
 
@@ -100,18 +107,6 @@ function createGrid() {
     gridVerHints = [];
     for(let hints of verHints)
         gridVerHints.push(Array(hints.length).fill(0));
-
-    // Tests TODO Rem
-
-    grid[0][3] = 1;
-    grid[1][3] = 1;
-    grid[2][3] = 1;
-    grid[2][4] = 1;
-    grid[0][6] = 2;
-
-    gridHorHints[0][1] = 1;
-    gridHorHints[5][0] = 1;
-    gridVerHints[2][1] = 1;
 }
 
 function countMaxHints(hints) {
@@ -144,9 +139,9 @@ function drawGrid() {
         for(let col = 0; col < numCols; col++) {
             let gridVal = grid[row][col];
             let cellColor = cellColors[2 * ((floor(row/5) + floor(col/5)) % 2) + (row + col) % 2];
-            if(gridVal == 1) {
+            if(gridVal == CELL_BLACK) {
                 cellColor = lerpColor(cellColor, color('black'), 0.9);
-            } else if(gridVal == 2) {
+            } else if(gridVal == CELL_WHITE) {
                 cellColor = lerpColor(cellColor, color('white'), 0.5);
             }
 
@@ -155,7 +150,7 @@ function drawGrid() {
             rect(col * cellSize, row * cellSize, cellSize, cellSize);
 
             strokeWeight(5);
-            if(gridVal == 2)
+            if(gridVal == CELL_WHITE)
                 point((col + 0.5) * cellSize, (row + 0.5) * cellSize);
         }
     }
@@ -249,9 +244,9 @@ function clickInGrid(mouseRow, mouseCol) {
     let nextVal = 0;
 
     if(mouseButton == LEFT) {
-        nextVal = currVal == 1 ? 0 : 1;
+        nextVal = currVal == CELL_BLACK ? CELL_EMPTY : CELL_BLACK;
     } else if(mouseButton == RIGHT) {
-        nextVal = currVal == 2 ? 0 : 2;
+        nextVal = currVal == CELL_WHITE ? CELL_EMPTY : CELL_WHITE;
     }
 
     if(nextVal != currVal)
@@ -298,6 +293,7 @@ function redo() {
 function apply(action) {
     if(action.type == TYPE_CELL) {
         grid[action.row][action.col] = action.to;
+        checkSolution();
     } else if(action.type == TYPE_HOR_HINT) {
         let hints = gridHorHints[action.row];
         hints[action.num] = 1 - hints[action.num];
@@ -317,6 +313,73 @@ function unapply(action) {
         let hints = gridVerHints[action.col];
         hints[action.num] = 1 - hints[action.num];
     }
+}
+
+function checkSolution() {
+    if(!ended && isSolved()) {
+        ended = true;
+        console.log("Solved!!");
+    }
+}
+
+function isSolved() {
+    // Check each row
+    for(let row = 0; row < numRows; row++) {
+        console.log(`Checking row ${row}`);
+        let hints = horHints[row];
+        let numHints = hints.length;
+
+        let currCount = 0;
+        let currGroup = 0;
+
+        for(let col = 0; col <= numCols; col++) {
+            if(col == numCols || grid[row][col] != CELL_BLACK) { // White or after last cell
+                if(currCount > 0) {
+                    if(currGroup >= numHints || hints[currGroup] != currCount) {
+                        return false;
+                    } else {
+                        currCount = 0;
+                        currGroup++;
+                    }
+                }
+            } else { // Black cell
+                currCount++;
+            }
+        }
+        if(currGroup != numHints) {
+            return false;
+        }
+    }
+
+    // Check each col
+    for(let col = 0; col < numCols; col++) {
+        console.log(`Checking col ${col}`);
+        let hints = verHints[col];
+        let numHints = hints.length;
+
+        let currCount = 0;
+        let currGroup = 0;
+
+        for(let row = 0; row <= numRows; row++) {
+            if(row == numRows || grid[row][col] != CELL_BLACK) { // White or after last cell
+                if(currCount > 0) {
+                    if(currGroup >= numHints || hints[currGroup] != currCount) {
+                        return false;
+                    } else {
+                        currCount = 0;
+                        currGroup++;
+                    }
+                }
+            } else { // Black cell
+                currCount++;
+            }
+        }
+        if(currGroup != numHints) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 function displayGrid() {
