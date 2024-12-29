@@ -1,7 +1,9 @@
+let id = 0;
+
 document.addEventListener('DOMContentLoaded', () => {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
-    let id = urlParams.get('id');
+    id = urlParams.get('id');
 
     if(id) setupSolver(id);
     else setupCreator();

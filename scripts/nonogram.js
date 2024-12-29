@@ -13,6 +13,9 @@ const CELL_WHITE = 2;
 
 const ZOOM_FACTOR = 1.2;
 
+// TODO Put it in the color palette
+const FADED = 150;
+
 let zoom = 1;
 
 let margin = 12;
@@ -43,6 +46,10 @@ let ended = false;
 function setup() {
     const canvas = createCanvas(500, 300);
     canvas.parent(document.getElementById('nonoDiv'));
+
+    // TODO Clean up
+    //getSeedFromValues(15, 40, "abC14");
+    //generateHints(4, 5, Math.random()*160000);
     
     // Initialize colors
     cellColors = [
@@ -64,9 +71,15 @@ function resize() {
 }
 
 function loadHints() {
-    // TODO Load grid
+    console.log(`Id: ${id}`)
+    const infos = getPlayerFromId(id);
 
-    numRows = 8;
+    numRows = infos.numRows;
+    numCols = infos.numCols;
+    horHints = infos.horHints;
+    verHints = infos.verHints;
+
+    /*numRows = 8;
     numCols = 10;
 
     horHints = [
@@ -91,7 +104,7 @@ function loadHints() {
         [2,2,1],
         [3,3],
         [3]
-    ]
+    ]*/
 
     maxHorHints = countMaxHints(horHints);
     maxVerHints = countMaxHints(verHints);
@@ -175,19 +188,20 @@ function drawHorHints() {
 
         for(let i = 0; i < numHints; i++) {
             let hint = rowHints[i];
+            let checked = gridHorHints[row][i] == 1;
 
             noStroke();
-            fill(0);
+            fill(checked ? FADED : 0);
             textSize(hint < 10 ? cellSize * 0.9 : cellSize * 0.7);
             textAlign(CENTER, CENTER);
             text(hint, -(numHints - i - 0.5) * cellSize, (row + 0.5) * cellSize + 2);
 
-            if(gridHorHints[row][i] == 1) {
+            /*if(checked) {
                 strokeWeight(3);
-                stroke(0, 200);
+                stroke(FADED, 200);
                 line((i - numHints) * cellSize + 2, row * cellSize + 6,
                     (i - numHints + 1) * cellSize - 2, (row + 1) * cellSize - 6);
-            }
+            }*/
         }
     }
 }
@@ -199,19 +213,20 @@ function drawVerHints() {
 
         for(let i = 0; i < numHints; i++) {
             let hint = colHints[i];
+            let checked = gridVerHints[col][i] == 1;
 
             noStroke();
-            fill(0);
+            fill(checked ? FADED : 0);
             textSize(hint < 10 ? cellSize * 0.9 : cellSize * 0.7);
             textAlign(CENTER, CENTER);
             text(hint, (col + 0.5) * cellSize, -(numHints - i - 0.5) * cellSize + 2);
             
-            if(gridVerHints[col][i] == 1) {
+            /*if(checked) {
                 strokeWeight(3);
                 stroke(0, 200);
                 line(col * cellSize + 2, (i - numHints) * cellSize + 6,
                     (col + 1) * cellSize - 2, (i - numHints + 1) * cellSize - 6);
-            }
+            }*/
         }
     }
 }
@@ -325,7 +340,6 @@ function checkSolution() {
 function isSolved() {
     // Check each row
     for(let row = 0; row < numRows; row++) {
-        console.log(`Checking row ${row}`);
         let hints = horHints[row];
         let numHints = hints.length;
 
@@ -353,7 +367,6 @@ function isSolved() {
 
     // Check each col
     for(let col = 0; col < numCols; col++) {
-        console.log(`Checking col ${col}`);
         let hints = verHints[col];
         let numHints = hints.length;
 
@@ -380,18 +393,6 @@ function isSolved() {
     }
 
     return true;
-}
-
-function displayGrid() {
-    let str = '';
-    for(let row = 0; row < numRows; row++) {
-        for(let col = 0; col < numCols; col++) {
-            let val = grid[row][col];
-            str += val == 0 ? '  ' : val == 1 ? ' X' : ' .';
-        }
-        str += '\n';
-    }
-    console.log(str);
 }
 
 function zoomIn() {
