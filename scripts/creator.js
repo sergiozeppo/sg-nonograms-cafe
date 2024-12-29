@@ -6,15 +6,17 @@ function generateNonogram(numRows, numCols, message) {
 
 }
 
-function getPlayerFromId(id) {
+function getPlayerFromId(id, numRows, numCols) {
     // TODO FROM ID
     // Extract seed
     // Extract numRows
     // Extract numCols
     // Extract encoded
 
-    let numRows = 15;
-    let numCols = 15;
+    /*let numRows = 15;
+    let numCols = 15;*/
+
+    console.log(`Creating with ${id} - ${numRows} - ${numCols}`);
 
     const seed = getSeedFromValues(numRows, numCols, id);
     const infos = generateHints(numRows, numCols, seed);
