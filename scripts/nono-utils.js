@@ -1,22 +1,6 @@
-test();
+testSolve1();
 
-function test() {
-    //testGridLines();
-    testSolve();
-}
-
-function testGridLines() {
-    
-    let grid = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
-    let gl = gridLine(grid, 0, 2);
-    let gl2 = gridLine(grid, 1, 1);
-    
-    console.log(`${gl()} -- ${gl2()}`);
-    grid[2][1] = 55;
-    console.log(`${gl()} -- ${gl2()}`);
-}
-
-function testSolve() {
+function testSolve1() {
     let horHints = [
         [2,2],
         [4,4],
@@ -44,49 +28,98 @@ function testSolve() {
     solveNonogram(horHints, verHints);
 }
 
+function testSolve2() {
+    let horHints = [
+        [1],
+        [1,2],
+        [1],
+        [5]
+    ];
+
+    let verHints = [
+        [1,1],
+        [1,1],
+        [1],
+        [1,1],
+        [3]
+    ];
+
+    solveNonogram(horHints, verHints);
+}
+
 function solveNonogram(horHints, verHints) {
     let numRows = horHints.length;
     let numCols = verHints.length;
     let grid = getEmptyGrid(numRows, numCols);
 
     let analysis = getAnalysisStruct(grid, [{hints: horHints, len: numCols}, {hints: verHints, len: numRows}]);
-    //console.log('%j', analysis);
     
     findInitialPossibilities(analysis);
 
     console.log('Initial possibilities!');
     
     let turn = 0;
-    let insights = null;
-    while(insights == null || insights.length > 0) {
+    let insights = [0];
+    while(insights.length > 0) {
         let dirAnalysis = analysis[turn % 2];
-        applyInsights(insights, grid, dirAnalysis);
-        insights = getInsights(dirAnalysis);
-        // We reduce possibilities according to line in grid
-        // We find commonalities
-        // If no commonality found for all of them
-        //  then we're done solving
+        
+        if(turn > 0) {
+            console.log(`\n\n - Turn ${turn+1} -\n`);
+            applyInsights(insights, grid, dirAnalysis); // Reduce possibilities
+        }
+
+        insights = getInsights(dirAnalysis); // Discover insights
+
         turn++;
     }
 
-    console.log('Done solving!');
-    //  And if not all cells found
-    //   then puzzle not unique/solvable
+    console.log(`\n -- End --\n`)
+    if(hasUniqueSolution(analysis)) {
+        console.log('Found unique solution!');
+    } else {
+        console.log('No unique solution...');
+    }
+    displayGrid(grid);
+}
 
+function hasUniqueSolution(analysis) {
+    for(let dirAnalysis of analysis)
+        for(let line of dirAnalysis.lines)
+            if(line.possibilities.length > 1)
+                return false;
+    return true;
 }
 
 function applyInsights(insights, grid, analysis) {
     if(insights == null) return;
-    /* TODO For each insight (row, col, val)
-        Apply change to grid
-        You know what, I think we don't even need to do half of it!!
-        Analysis[0][row], reduce possibilities where line[col] != val
-        Analysis[1][col], reduce possibilities where line[row] != val
-     */
+
+    console.log(`Applying ${insights.length} insights`);
+    for(let i of insights) {
+        let row = i.line * analysis.dir + i.pos * (1 - analysis.dir);
+        let col = i.line * (1 - analysis.dir) + i.pos * analysis.dir;
+        grid[row][col] = i.val;
+
+        let line = analysis.lines[i.pos];
+        line.possibilities = reducePossibilities(line.possibilities, i);
+    }
+    displayGrid(grid);
+}
+
+// Removes all possibilities that contradict the insight
+function reducePossibilities(possibilities, insight) {
+    if(possibilities.length == 1)
+        return possibilities;
+    
+    let newPoss = [];
+    for(let possibility of possibilities) {
+        if(possibility[insight.line] == (2-insight.val))
+            newPoss.push(possibility);
+    }
+    
+    return newPoss;
 }
 
 function getInsights(analysis) {
-    console.log('Analyzing');
     let insights = [];
     const numLines = analysis.lines.length;
     for(let i = 0; i < numLines; i++) {
@@ -107,13 +140,12 @@ function findCommonalities(line) {
     const skipCheck = (line.possibilities.length) === 1;
     const result = [];
 
-    // Iterate through each index
     for (let i = 0; i < len; i++) {
         if (gridLine[i] == 0) {
             if(skipCheck) {
                 result.push(i);
             } else {
-                const value = line.possibilities[0][i]; // Take the value from the first string
+                const value = line.possibilities[0][i];
                 if (gridLine[i] == 0 && line.possibilities.every(str => str[i] === value)) {
                     result.push(i);
                 }
@@ -138,7 +170,7 @@ function getAnalysisStruct(grid, params) {
     let analysisStruct = [];
     for(let dir in params) {
         let dirParams = params[dir];
-        let obj = {lineLen: dirParams.len, lines: []};
+        let obj = {dir: dir, lineLen: dirParams.len, lines: []};
         for(let i = 0; i < dirParams.hints.length; i++) {
             obj.lines.push({index: i, hints: dirParams.hints[i],
                 get: getGridLine(grid, dir, i)});
@@ -154,25 +186,6 @@ function findInitialPossibilities(analysis) {
             line.possibilities = listLinePossibilities(line.hints, dirAnalysis.lineLen);
         }
     }
-}
-
-function findCommonalities2(possibilities, len) {
-    if (possibilities.length === 0) return [];
-    if (possibilities.length === 1) return [...Array(len).keys()];
-
-    const result = [];
-
-    // Iterate through each index
-    for (let i = 0; i < len; i++) {
-        const value = possibilities[0][i]; // Take the value from the first string
-
-        // Check if all strings have the same value at this index
-        if (possibilities.every(str => str[i] === value)) {
-            result.push(i);
-        }
-    }
-
-    return result;
 }
 
 function listLinePossibilities(hints, len) {
@@ -338,27 +351,24 @@ function generateHints(numRows, numCols, seed) {
 function generateGrid(numRows, numCols, seed) {
     const rd = Math.seed(seed);
 
-    const ratio = 0.5 + 0.25 * rd(); // 50% to 75%
+    const ratio = 0.4 + 0.4 * rd(); // 40% to 80%
     const totalCells = numRows * numCols;
     const numOnes = Math.round(totalCells * ratio);
     const numZeros = totalCells - numOnes;
 
-    // Create an array with the appropriate number of 1s and 0s
     const cells = Array(numOnes).fill(1).concat(Array(numZeros).fill(0));
 
-    // Shuffle the array to randomize the placement
     for (let i = cells.length - 1; i > 0; i--) {
         const j = Math.floor(rd() * (i + 1));
         [cells[i], cells[j]] = [cells[j], cells[i]];
     }
 
-    // Convert the shuffled array into a 2D grid
     const grid = [];
     for (let i = 0; i < numRows; i++) {
         grid.push(cells.slice(i * numCols, (i + 1) * numCols));
     }
 
-    displayGrid(grid);
+    displayGrid(grid); // TODO Rem
 
     return grid;
 }
