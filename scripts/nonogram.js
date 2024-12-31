@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     id = urlParams.get('id') || getRandomId();
     numCols = parseInt(urlParams.get('w')) || 10;
     numRows = parseInt(urlParams.get('h')) || 10;
+    //seed = parseInt(urlParams.get('seed'));
 
     let urlField = document.getElementById('url')
     urlField.value = `${URL}?id=${id}&w=${numCols}&h=${numRows}`;
@@ -138,6 +139,21 @@ function loadHints() {
         [3,3],
         [3]
     ]*/
+
+    maxHorHints = countMaxHints(horHints);
+    maxVerHints = countMaxHints(verHints);
+}
+
+function loadHintsNew() {
+    //console.log(`Id: ${id}`)
+    //const infos = getPlayerFromId(id, numCols, numRows);
+    const g = generateGrid(numRows, numCols, seed);
+    [horHints, verHints] = generateHints(g)
+
+    //numRows = infos.numRows;
+    //numCols = infos.numCols;
+    //horHints = hints[0];
+    //verHints = hints[1];
 
     maxHorHints = countMaxHints(horHints);
     maxVerHints = countMaxHints(verHints);

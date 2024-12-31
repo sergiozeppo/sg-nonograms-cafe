@@ -1,4 +1,9 @@
-testSolve1();
+//testSolve1();
+testGen();
+
+function testGen() {
+    generateNonogramLink(5, 10, 'acbdg');
+}
 
 function testSolve1() {
     let horHints = [
@@ -56,7 +61,7 @@ function solveNonogram(horHints, verHints) {
     
     findInitialPossibilities(analysis);
 
-    console.log('Initial possibilities!');
+    // XXX console.log('Initial possibilities!');
     
     let turn = 0;
     let insights = [0];
@@ -64,7 +69,7 @@ function solveNonogram(horHints, verHints) {
         let dirAnalysis = analysis[turn % 2];
         
         if(turn > 0) {
-            console.log(`\n\n - Turn ${turn+1} -\n`);
+            // XXX console.log(`\n\n - Turn ${turn+1} -\n`);
             applyInsights(insights, grid, dirAnalysis); // Reduce possibilities
         }
 
@@ -73,13 +78,17 @@ function solveNonogram(horHints, verHints) {
         turn++;
     }
 
-    console.log(`\n -- End --\n`)
-    if(hasUniqueSolution(analysis)) {
+    let isUnique = hasUniqueSolution(analysis)
+
+    // XXX console.log(`\n -- End --\n`)
+    if(isUnique) {
         console.log('Found unique solution!');
     } else {
         console.log('No unique solution...');
     }
     displayGrid(grid);
+
+    return isUnique;
 }
 
 function hasUniqueSolution(analysis) {
@@ -93,7 +102,7 @@ function hasUniqueSolution(analysis) {
 function applyInsights(insights, grid, analysis) {
     if(insights == null) return;
 
-    console.log(`Applying ${insights.length} insights`);
+    // XXX console.log(`Applying ${insights.length} insights`);
     for(let i of insights) {
         let row = i.line * analysis.dir + i.pos * (1 - analysis.dir);
         let col = i.line * (1 - analysis.dir) + i.pos * analysis.dir;
@@ -102,7 +111,7 @@ function applyInsights(insights, grid, analysis) {
         let line = analysis.lines[i.pos];
         line.possibilities = reducePossibilities(line.possibilities, i);
     }
-    displayGrid(grid);
+    // XXX displayGrid(grid);
 }
 
 // Removes all possibilities that contradict the insight
@@ -237,8 +246,23 @@ function listPossibilities(numSpots, numFillers, current = [], results = []) {
 
 // Takes in a secret code and sizes
 // Returns an id
-function generateNonogram(numRows, numCols, message) {
+function generateNonogramLink(numRows, numCols, message) {
+    let seed = getSeedFromValues(numRows, numCols, message);
+    let cipher = null;
 
+    while(!cipher) {
+        console.log(`Seed: ${seed}`);
+        let grid = generateGrid(numRows, numCols, seed);
+        let hints = generateHints(grid);
+
+        if(solveNonogram(hints[0], hints[1])) {
+            cipher = 'lol';
+        } else {
+            seed++;
+        }
+    }
+
+    console.log('Done!')
 }
 
 function getPlayerFromId(id, numRows, numCols) {
@@ -281,8 +305,6 @@ function getSeedFromValues(numRows, numCols, code) {
     vals.push(numRows);
     vals.push(numCols);
 
-    console.log(vals);
-
     // Convert the values to a single number using bitwise operations
     let hash = 0;
 
@@ -299,17 +321,18 @@ function getSeedFromValues(numRows, numCols, code) {
     // Final hash as a 32-bit integer
     hash &= 0xFFFFFFFF;
 
-    console.log(hash);
-    
     return hash;
 }
 
 // Takes in a seed and sizes
 // Returns hints
-function generateHints(numRows, numCols, seed) {
-    const grid = generateGrid(numRows, numCols, seed);
+function generateHints(grid) {
+    let numRows = grid.length;
+    let numCols = grid[0].length;
     let horHints = [];
     let verHints = [];
+
+    // TODO Z Reduce duplicated code
 
     for(let row = 0; row < numRows; row++) {
         let hints = [];
@@ -345,11 +368,11 @@ function generateHints(numRows, numCols, seed) {
         verHints.push(hints);
     }
 
-    return {horHints, verHints};
+    return [horHints, verHints];
 }
 
 function generateGrid(numRows, numCols, seed) {
-    const rd = Math.seed(seed);
+    const rd = getRandomizer(seed);
 
     const ratio = 0.4 + 0.4 * rd(); // 40% to 80%
     const totalCells = numRows * numCols;
@@ -368,13 +391,13 @@ function generateGrid(numRows, numCols, seed) {
         grid.push(cells.slice(i * numCols, (i + 1) * numCols));
     }
 
-    displayGrid(grid); // TODO Rem
+    //displayGrid(grid); // TODO Rem
 
     return grid;
 }
 
 // https://stackoverflow.com/a/29450606
-Math.seed = function(seed) {
+function getRandomizer(seed) {
     var mask = 0xffffffff;
     var m_w  = (123456789 + seed) & mask;
     var m_z  = (987654321 - seed) & mask;
