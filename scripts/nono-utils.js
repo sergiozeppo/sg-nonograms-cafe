@@ -1,4 +1,20 @@
-testSolve();
+test();
+
+function test() {
+    //testGridLines();
+    testSolve();
+}
+
+function testGridLines() {
+    
+    let grid = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]];
+    let gl = gridLine(grid, 0, 2);
+    let gl2 = gridLine(grid, 1, 1);
+    
+    console.log(`${gl()} -- ${gl2()}`);
+    grid[2][1] = 55;
+    console.log(`${gl()} -- ${gl2()}`);
+}
 
 function testSolve() {
     let horHints = [
@@ -33,57 +49,99 @@ function solveNonogram(horHints, verHints) {
     let numCols = verHints.length;
     let grid = getEmptyGrid(numRows, numCols);
 
-    let dir = 0; // hor
-
-    let analysis = getAnalysisStruct([
-        {hints: horHints, len: numCols, content: gridAnalyzer(grid, 0)}, 
-        {hints: verHints, len: numRows, content: gridAnalyzer(grid, 1)}]);
+    let analysis = getAnalysisStruct(grid, [{hints: horHints, len: numCols}, {hints: verHints, len: numRows}]);
     //console.log('%j', analysis);
-    findInitialPossibilities(analysis);
-    // First calculate all possibilities for each row and column
     
-    ////////////////////////////////////// I AM HERE NOW
-    /*
-        Going to use the gridAnalyzer to read the line individually
-        
-    */
+    findInitialPossibilities(analysis);
 
-    /*while(true) {
+    console.log('Initial possibilities!');
+    
+    let turn = 0;
+    let insights = null;
+    while(insights == null || insights.length > 0) {
+        let dirAnalysis = analysis[turn % 2];
+        applyInsights(insights, grid, dirAnalysis);
+        insights = getInsights(dirAnalysis);
+        // We reduce possibilities according to line in grid
+        // We find commonalities
+        // If no commonality found for all of them
+        //  then we're done solving
+        turn++;
+    }
 
-    }*/
-
-    // Then we alternate (row, col)
-    // For all of the type
-    // We reduce possibilities according to line in grid
-    // We find commonalities
-    // If no commonality found for all of them
-    //  then we're done solving
+    console.log('Done solving!');
     //  And if not all cells found
     //   then puzzle not unique/solvable
+
 }
 
-function gridAnalyzer(grid, direction) {
-    // Return a function that accepts an index
-    return function(index) {
-        if (direction === 0) {
-            // Horizontal: return the row at the given index
+function applyInsights(insights, grid, analysis) {
+    if(insights == null) return;
+    /* TODO For each insight (row, col, val)
+        Apply change to grid
+        You know what, I think we don't even need to do half of it!!
+        Analysis[0][row], reduce possibilities where line[col] != val
+        Analysis[1][col], reduce possibilities where line[row] != val
+     */
+}
+
+function getInsights(analysis) {
+    console.log('Analyzing');
+    let insights = [];
+    const numLines = analysis.lines.length;
+    for(let i = 0; i < numLines; i++) {
+        let line = analysis.lines[i];
+        for(let pos of findCommonalities(line)) {
+            insights.push({line: i, pos, val: line.possibilities[0][pos] == '1' ? 1 : 2});
+        }
+    }
+
+    return insights;
+}
+
+function findCommonalities(line) {
+    if (line.possibilities.length === 0) return [];
+
+    const gridLine = line.get();
+    const len = gridLine.length;
+    const skipCheck = (line.possibilities.length) === 1;
+    const result = [];
+
+    // Iterate through each index
+    for (let i = 0; i < len; i++) {
+        if (gridLine[i] == 0) {
+            if(skipCheck) {
+                result.push(i);
+            } else {
+                const value = line.possibilities[0][i]; // Take the value from the first string
+                if (gridLine[i] == 0 && line.possibilities.every(str => str[i] === value)) {
+                    result.push(i);
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
+function getGridLine(grid, direction, index) {
+    return function() {
+        if (direction == 0) { // Horizontal
             return grid[index];
-        } else if (direction === 1) {
-            // Vertical: return the column at the given index
+        } else if (direction == 1) { // Vertical
             return grid.map(row => row[index]);
         }
     };
 }
 
-function getAnalysisStruct(params) {
+function getAnalysisStruct(grid, params) {
     let analysisStruct = [];
-    for(let dirParams of params) {
-        let obj = {};
-        obj.lineLen = dirParams.len;
-        obj.content = dirParams.content;
-        obj.lines = [];
+    for(let dir in params) {
+        let dirParams = params[dir];
+        let obj = {lineLen: dirParams.len, lines: []};
         for(let i = 0; i < dirParams.hints.length; i++) {
-            obj.lines.push({index: i, hints: dirParams.hints[i]});
+            obj.lines.push({index: i, hints: dirParams.hints[i],
+                get: getGridLine(grid, dir, i)});
         }
         analysisStruct.push(obj);
     }
@@ -98,7 +156,7 @@ function findInitialPossibilities(analysis) {
     }
 }
 
-function findCommonalities(possibilities, len) {
+function findCommonalities2(possibilities, len) {
     if (possibilities.length === 0) return [];
     if (possibilities.length === 1) return [...Array(len).keys()];
 
