@@ -54,7 +54,6 @@ const sketch = (p, id) => {
     const PAGE_URL = `https://rosiminc.github.io/sg-nonograms/`;
 
     p.setup = function() {
-        console.log('WAAH')
         const canvas = p.createCanvas(500, 300);
         canvas.parent(document.getElementById('nonoDiv'));
 
@@ -99,6 +98,7 @@ const sketch = (p, id) => {
     }
 
     function resetGrid() {
+        console.log('Reset!');
         grid = nono.getEmptyGrid(numRows, numCols);
 
         gridHorHints = [];
@@ -475,6 +475,8 @@ const sketch = (p, id) => {
             zoomIn();
         } else if (p.keyCode === p.DOWN_ARROW || p.key === '-' ) {
             zoomOut();
+        } else if (p.key === 'r') {
+            resetGrid();
         }
     }
 };
@@ -492,8 +494,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const id = urlParams.get('id');
     const numCols = parseInt(urlParams.get('w')) || 10;
     const numRows = parseInt(urlParams.get('h')) || 10;
-
-    console.log('Hmm?')
 
     new p5((p) => sketch(p, id));
 });

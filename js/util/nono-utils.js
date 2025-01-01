@@ -209,7 +209,7 @@ export function generateNonogramLink(numRows, numCols, message) {
     console.log('Done!')
 }
 
-function getPlayerFromId(id, numRows, numCols) {
+/*function getPlayerFromId(id, numRows, numCols) {
     // TODO FROM ID
     // Extract seed
     // Extract numRows
@@ -228,21 +228,11 @@ function getPlayerFromId(id, numRows, numCols) {
         horHints: infos.horHints,
         verHints: infos.verHints
     };
-}
+}*/
 
 function getSeedFromValues(numRows, numCols, code) {
     console.log(`Generating for ${numRows}, ${numCols}, ${code}`)
-    let vals = Array.from(code).map(c => {
-        if (c >= 'a' && c <= 'z') {
-            return c.charCodeAt(0) - 'a'.charCodeAt(0);  // 0-25 for a-z
-        } else if (c >= 'A' && c <= 'Z') {
-            return c.charCodeAt(0) - 'A'.charCodeAt(0) + 26;  // 26-51 for A-Z
-        } else if (c >= '0' && c <= '9') {
-            return c.charCodeAt(0) - '0'.charCodeAt(0) + 52;  // 52-61 for 0-9
-        } else {
-            return 62;  // Any other character gets 62
-        }
-    });
+    let vals = Array.from(code).map(c => mf.toNum(c));
     vals.push(numRows);
     vals.push(numCols);
 
@@ -337,22 +327,6 @@ export function generateGrid(numRows, numCols, seed) {
     return grid;
 }
 
-// https://stackoverflow.com/a/29450606
-function getRandomizer(seed) {
-    var mask = 0xffffffff;
-    var m_w  = (123456789 + seed) & mask;
-    var m_z  = (987654321 - seed) & mask;
-
-    return function() {
-      m_z = (36969 * (m_z & 65535) + (m_z >>> 16)) & mask;
-      m_w = (18000 * (m_w & 65535) + (m_w >>> 16)) & mask;
-
-      var result = ((m_z << 16) + (m_w & 65535)) >>> 0;
-      result /= 4294967296;
-      return result;
-    }
-}
-
 export function getEmptyGrid(numRows, numCols) {
     return Array.from({ length: numRows }, () => Array(numCols).fill(0));
 }
@@ -369,15 +343,4 @@ export function displayGrid(grid) {
         str += '\n';
     }
     console.log(str);
-}
-
-function getRandomId() {
-    let str = '';
-    for (let i = 0; i < 5; i++) {
-        let num = Math.floor(Math.random() * 62);
-        str += num < 26 ? String.fromCharCode('a'.charCodeAt(0) + num) : // a-z
-            num < 52 ? String.fromCharCode('A'.charCodeAt(0) + num - 26) : // A-Z
-            String.fromCharCode('0'.charCodeAt(0) + num - 52); // 0-9
-    }
-    return str;
 }
