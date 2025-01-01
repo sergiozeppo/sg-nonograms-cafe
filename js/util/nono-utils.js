@@ -267,7 +267,7 @@ function getSeedFromValues(numRows, numCols, code) {
 
 // Takes in a seed and sizes
 // Returns hints
-function generateHints(grid) {
+export function generateHints(grid) {
     let numRows = grid.length;
     let numCols = grid[0].length;
     let horHints = [];
@@ -312,7 +312,7 @@ function generateHints(grid) {
     return [horHints, verHints];
 }
 
-function generateGrid(numRows, numCols, seed) {
+export function generateGrid(numRows, numCols, seed) {
     const rd = getRandomizer(seed);
 
     const ratio = 0.4 + 0.4 * rd(); // 40% to 80%
@@ -369,4 +369,15 @@ export function displayGrid(grid) {
         str += '\n';
     }
     console.log(str);
+}
+
+function getRandomId() {
+    let str = '';
+    for (let i = 0; i < 5; i++) {
+        let num = Math.floor(Math.random() * 62);
+        str += num < 26 ? String.fromCharCode('a'.charCodeAt(0) + num) : // a-z
+            num < 52 ? String.fromCharCode('A'.charCodeAt(0) + num - 26) : // A-Z
+            String.fromCharCode('0'.charCodeAt(0) + num - 52); // 0-9
+    }
+    return str;
 }
