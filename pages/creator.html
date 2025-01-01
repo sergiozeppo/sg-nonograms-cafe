@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RosimInc's Nonogram Café - Creator</title>
+    <script src="scripts/creator.js"></script>
+    <script src="scripts/main.js"></script>
+</head>
+<body>
+    <h1>RosimInc's Nonogram Café</h1>
+    <h2>Nonogram Creator</h2>
+    
+    <form id="creationForm">
+        <label for="name">Name:</label><br>
+        <input type="text" id="name" name="name" required><br><br>
+    
+        <label for="secretText">Secret Text:</label><br>
+        <input type="text" id="secretText" name="secretText" required><br><br>
+        
+        <label for="width">Width (5-40):</label><br>
+        <input type="number" id="width" name="width" min="5" max="40" required><br><br>
+        
+        <label for="height">Height (5-30):</label><br>
+        <input type="number" id="height" name="height" min="5" max="30" required><br><br>
+        
+        <button type="button">Create!</button>
+        </form>
+</body>
+</html>
