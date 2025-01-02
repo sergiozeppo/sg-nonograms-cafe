@@ -3,3 +3,19 @@ body {
     color: white; /* Ensures text is readable */
     font-family: Arial, sans-serif; /* Sets a clean font */
 }
+
+#url {
+    margin: 5px;
+    width: 100%;
+    max-width: 600px;
+}
+
+#link {
+    display: none;
+    font-size: large;
+    font-weight: bold;
+}
+
+.content {
+    padding: 15px;
+}

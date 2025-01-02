@@ -3,7 +3,6 @@ import { BitSeq, NUM_ALPHA_BITS } from './bitseq.js';
 const VERSION = 1;
 
 export function parseId(id) {
-	console.log('id - ' + id);
 	const bitSeq = new BitSeq().appendAlpha(id).getUnshuffled();
 
 	const reader = bitSeq.getReader();

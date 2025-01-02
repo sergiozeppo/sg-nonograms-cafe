@@ -60,7 +60,7 @@ const sketch = (p, id) => {
 
         initializeColors();
 
-        loadHints();
+        loadPuzzle();
 
         resetGrid();
         resize();
@@ -80,8 +80,10 @@ const sketch = (p, id) => {
             zoom * (2 * margin + (maxVerHints + numRows) * cellSize));
     }
 
-    function loadHints() {
+    function loadPuzzle() {
         if(!id) id = nono.generateNonogram(10, 10, null);
+
+        document.getElementById('url').value = `${nono.PAGE_URL}?id=${id}`;
 
         let version, seed;
         ({version, numRows, numCols, seed, msg} = idParser.parseId(id));
@@ -393,6 +395,9 @@ const sketch = (p, id) => {
 
     function displaySecretMessage() {
         let decrypted = nono.decryptWithGrid(msg, grid);
+        const linkPar = document.getElementById('link');
+        linkPar.textContent = decrypted;
+        linkPar.style.display = 'block';
         console.log('FOUND ' + decrypted);
     }
 
@@ -481,7 +486,7 @@ const sketch = (p, id) => {
 
 
 // Remove right click menu
-document.addEventListener('contextmenu', (event) => {
+document.getElementById('nonoDiv').addEventListener('contextmenu', (event) => {
     event.preventDefault();
 });
 

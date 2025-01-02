@@ -181,14 +181,11 @@ function listPossibilities(numSpots, numFillers, current = [], results = []) {
 }
 
 function getGridBinary(grid) {
-    displayGrid(grid);
     let bitSeq = new BitSeq();
 
     for(let row = 0; row < grid.length; row++)
         for(let col = 0; col < grid[0].length; col++)
             bitSeq.append(grid[row][col] == 1 ? '1' : '0');
-
-    console.log(bitSeq.get())
 
     return bitSeq;
 }
