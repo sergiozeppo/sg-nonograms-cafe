@@ -1,4 +1,8 @@
 export const MAX_HASH = 0x7FFFFFFF;
+export const ALPHAS = Array.from("-_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+export const ALPHA_TO_NUM = new Map(ALPHAS.map((alpha, index) => [alpha, index]));
+export const CHARS = Array.from("� !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~éèêëàâçîïôùûœáíóúñÉÈÊËÀÂÇÎÏÔÙÛŒÁÍÓÚÑ");
+export const CHAR_TO_NUM = new Map(CHARS.map((char, index) => [char, index]));
 
 // https://stackoverflow.com/a/29450606
 export function getRandomizer(seed) {
@@ -36,20 +40,28 @@ export function hash(vals) {
     return hash;
 }
 
-export function toAlpha(num) {
-	return num == 62 ? '-' : // 62 is -
-		num == 63 ? '_' : // 63 is _
-		num < 26 ? String.fromCharCode('a'.charCodeAt(0) + num) : // 0-25 for a-z
-		num < 52 ? String.fromCharCode('A'.charCodeAt(0) + num - 26) : // 26-51 for A-Z
-		String.fromCharCode('0'.charCodeAt(0) + num - 52); // 52-61 for 0-9
+export function numToAlpha(num) {
+	return numToX(ALPHAS, num);
 }
 
-export function toNum(alpha) {
-	return alpha == '-' ?  62 :
-		(alpha >= 'a' && alpha <= 'z') ? alpha.charCodeAt(0) - 'a'.charCodeAt(0) : // 0-25 for a-z
-		(alpha >= 'A' && alpha <= 'Z') ? alpha.charCodeAt(0) - 'A'.charCodeAt(0) + 26 : // 26-51 for A-Z
-		(alpha >= '0' && alpha <= '9') ? alpha.charCodeAt(0) - '0'.charCodeAt(0) + 52 : // 52-61 for 0-9
-		63; // 63 is _
+export function alphaToNum(alpha) {
+	return xToNum(ALPHA_TO_NUM, alpha);
+}
+
+export function numToChar(num) {
+	return numToX(CHARS, num);
+}
+
+export function charToNum(char) {
+	return xToNum(CHAR_TO_NUM, char);
+}
+
+export function numToX(arr, num) {
+	return arr[num < arr.length ? num : 0];
+}
+
+export function xToNum(arr, char) {
+	return arr.get(char) ?? 0;
 }
 
 export function shuffle(arr, seed) {

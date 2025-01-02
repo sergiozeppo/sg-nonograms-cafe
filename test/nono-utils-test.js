@@ -2,11 +2,6 @@ import * as nono from '../js/util/nono-utils.js';
 
 testSolve1();
 testSolve2();
-testGen();
-
-function testGen() {
-    nono.generateNonogramLink(5, 10, 'acbdg');
-}
 
 function testSolve1() {
     let horHints = [

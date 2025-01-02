@@ -20,7 +20,7 @@ export function parseId(id) {
 			numCols = reader.readNum(5);
 			seed = reader.readNum(31);
 			msgType = reader.readNum(1);
-			msg = reader.readAlpha(5);
+			msg = reader.readAlphas(5);
 			break;
 		default:
 	}
@@ -28,7 +28,7 @@ export function parseId(id) {
 	return { version, numRows, numCols, seed, msgType, msg };
 }
 
-export function generateId(numRows, numCols, seed, msg, msgType = 0, version = VERSION) {
+export function generateId(numRows, numCols, seed, msg, msgType, version = VERSION) {
 	let bitSeq = new BitSeq();
 	bitSeq.appendNum(version - 1, 6);
 
@@ -43,5 +43,5 @@ export function generateId(numRows, numCols, seed, msg, msgType = 0, version = V
 		default:
 	}
 
-	return bitSeq.getShuffled().toAlpha();
+	return bitSeq.getShuffled().toAlphas();
 }

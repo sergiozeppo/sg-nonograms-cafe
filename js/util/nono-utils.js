@@ -3,7 +3,7 @@ import * as idParser from './id-parser.js';
 import { BitSeq } from './bitseq.js';
 
 export const PAGE_URL = `https://rosiminc.github.io/sg-nonograms/`;
-export const SG_URL = `steamgifts/`;
+export const SG_URL = `https://www.steamgifts.com/giveaway/`;
 
 export function solveNonogram(horHints, verHints) {
     let numRows = horHints.length;
@@ -190,20 +190,19 @@ function getGridBinary(grid) {
     return bitSeq;
 }
 
-export function decryptWithGrid(msg, grid) {
+export function decryptWithGrid(msg, msgType, grid) {
     let msgSeq = new BitSeq().appendAlpha(msg);
     let gridSeq = getGridBinary(grid);
-    return msgSeq.getXOR(gridSeq).toAlpha();
+    let decrypted = msgSeq.getXOR(gridSeq);
+    return msgType == 1 ? decrypted.toChars() : decrypted.toAlpha();
 }
 
 export function getPuzzle(numRows, numCols, seed) {
     const grid = generateGrid(numRows, numCols, seed);
-    return generateHints(grid)
+    return generateHints(grid);
 }
 
-// Takes in a secret code and sizes
-// Returns an id
-export function generateNonogram(numRows, numCols, message, type = 0) {
+export function generateNonogram(numRows, numCols, message, msgType = 0) {
     let seed;
     if(message) {
         seed = mathUtils.hash(message.split("").map(v => mathUtils.toNum(v)));
@@ -224,12 +223,16 @@ export function generateNonogram(numRows, numCols, message, type = 0) {
             seed++;
     }
 
-    const toEncrypt = new BitSeq().appendAlpha(message);
+    const toEncrypt = new BitSeq();
+    if(msgType == 1)
+        toEncrypt.appendChars(message);
+    else
+        toEncrypt.appendAlphas(message);
     const cipher = getGridBinary(grid);
 
-    const encrypted = toEncrypt.getXOR(cipher).toAlpha();
+    const encrypted = toEncrypt.getXOR(cipher).toAlphas();
 
-    return idParser.generateId(numRows, numCols, seed, encrypted);
+    return idParser.generateId(numRows, numCols, seed, encrypted, msgType);
 }
 
 function generateHints(grid) {
