@@ -11,7 +11,6 @@ const msgType = args[3] || 0;
 const id = nono.generateNonogram(numRows, numCols, msg, msgType);
 
 const infos = idParser.parseId(id);
-console.log(infos)
 const [horHints, verHints] = nono.getPuzzle(infos.numRows, infos.numCols, infos.seed);
 const grid = nono.solveNonogram(horHints, verHints);
 const dec = nono.decryptWithGrid(infos.enc, infos.msgType, grid);

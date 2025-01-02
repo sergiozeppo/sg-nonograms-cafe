@@ -71,17 +71,12 @@ export class BitSeq {
     getShuffled() {
         let arr = this.bits.split("");
         let newArr = mathUtils.shuffle(arr, SHUFFLE_SEED);
-
-        //console.log(`Before shuffle:   ${arr.join('')}`);
-        //console.log(`After shuffle:    ${newArr.join('')}`);
         return new BitSeq(newArr.join(""));
     }
 
     getUnshuffled() {
         let arr = this.bits.split("");
         let newArr = mathUtils.unshuffle(arr, SHUFFLE_SEED);
-        //console.log(`Before unshuffle: ${arr.join('')}`);
-        //console.log(`After unshuffle:  ${newArr.join('')}`);
         return new BitSeq(newArr.join(""));
     }
 }
@@ -97,8 +92,6 @@ class BitSeqReader {
 
         let bitsLeft = this.left();
         if(numBits == undefined || numBits == null || numBits > bitsLeft) numBits = bitsLeft;
-
-        //console.log(`Bits left: ${numBits}`)
 
         const str = this.bits.substring(this.ptr, this.ptr + numBits);
         this.ptr += numBits;

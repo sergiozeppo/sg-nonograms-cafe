@@ -191,7 +191,6 @@ function getGridBinary(grid) {
 }
 
 export function decryptWithGrid(enc, msgType, grid) {
-    console.log(`${enc.get()} ${msgType}`)
     let gridSeq = getGridBinary(grid);
     let decSeq = enc.getXOR(gridSeq);
     return msgType == 0 ? decSeq.toChars() : decSeq.toAlphas();
@@ -231,8 +230,6 @@ export function generateNonogram(numRows, numCols, message, msgType) {
     const cipher = getGridBinary(grid);
 
     const enc = toEncrypt.getXOR(cipher);
-    console.log(`Encrypting ${message} to ${toEncrypt.get()} (${enc.length()} bits)`);
-    console.log(`Cipher: ${cipher.get()}`);
 
     return idParser.generateId(numRows, numCols, seed, enc, msgType);
 }
