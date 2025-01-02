@@ -2,8 +2,8 @@ import * as mathUtils from './math-utils.js';
 import * as idParser from './id-parser.js';
 import { BitSeq } from './bitseq.js';
 
-export const PAGE_URL = `https://rosiminc.github.io/sg-nonograms/`;
-export const SG_URL = `https://www.steamgifts.com/giveaway/`;
+const PAGE_URL = `https://rosiminc.github.io/sg-nonograms/`;
+const SG_URL = `https://www.steamgifts.com/`;
 
 export function solveNonogram(horHints, verHints) {
     let numRows = horHints.length;
@@ -191,10 +191,10 @@ function getGridBinary(grid) {
 }
 
 export function decryptWithGrid(msg, msgType, grid) {
-    let msgSeq = new BitSeq().appendAlpha(msg);
+    let msgSeq = new BitSeq().appendAlphas(msg);
     let gridSeq = getGridBinary(grid);
     let decrypted = msgSeq.getXOR(gridSeq);
-    return msgType == 1 ? decrypted.toChars() : decrypted.toAlpha();
+    return msgType == 0 ? decrypted.toChars() : decrypted.toAlphas();
 }
 
 export function getPuzzle(numRows, numCols, seed) {
@@ -205,10 +205,10 @@ export function getPuzzle(numRows, numCols, seed) {
 export function generateNonogram(numRows, numCols, message, msgType = 0) {
     let seed;
     if(message) {
-        seed = mathUtils.hash(message.split("").map(v => mathUtils.toNum(v)));
+        seed = mathUtils.hash(message.split("").map(v => mathUtils.charToNum(v)));
     } else {
-        message = 'Top 1';
-        seed = Math.floor(Math.random()*100000000);
+        message = 'Well done!';
+        seed = Math.floor(Math.random() * 100000000);
     }
     
     let solved = false;
@@ -224,7 +224,7 @@ export function generateNonogram(numRows, numCols, message, msgType = 0) {
     }
 
     const toEncrypt = new BitSeq();
-    if(msgType == 1)
+    if(msgType == 0)
         toEncrypt.appendChars(message);
     else
         toEncrypt.appendAlphas(message);
@@ -318,4 +318,12 @@ export function displayGrid(grid) {
         str += '\n';
     }
     console.log(str);
+}
+
+export function getPageURL(id) {
+    return `${PAGE_URL}?id=${id}`;
+}
+
+export function getSteamGiftsURL(code) {
+    return `${SG_URL}giveaway/${code}/`;
 }

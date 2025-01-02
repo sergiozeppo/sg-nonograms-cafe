@@ -5,9 +5,13 @@ body {
 }
 
 #url {
-    margin: 5px;
     width: 100%;
     max-width: 600px;
+}
+
+#urlDiv {
+    display: none;
+    margin: 5px;
 }
 
 #link {

@@ -82,9 +82,10 @@ const sketch = (p, id) => {
     }
 
     function loadPuzzle() {
-        if(!id) id = nono.generateNonogram(10, 10, null, 1);
+        if(!id) id = nono.generateNonogram(10, 10, null);
+        console.log(nono.getPageURL(id))
 
-        document.getElementById('url').value = `${nono.PAGE_URL}?id=${id}`;
+        document.getElementById('url').value = nono.getPageURL(id);
 
         let seed;
         ({numRows, numCols, seed, msg, msgType} = idParser.parseId(id));
@@ -395,10 +396,21 @@ const sketch = (p, id) => {
     }
 
     function displaySecretMessage() {
-        let decrypted = nono.decryptWithGrid(msg, msgType, grid);
+        let code = nono.decryptWithGrid(msg, msgType, grid);
         const msgPar = document.getElementById('message');
-        msgPar.textContent = msgType == 1 ? decrypted : nono.SG_URL /* TODO */;
+        if(msgType == 0) {
+            msgPar.textContent = code;
+        } else {
+            msgPar.appendChild(getAnchor(nono.getSteamGiftsURL(code)));
+        }
         msgPar.style.display = 'block';
+    }
+
+    function getAnchor(link, text = null) {
+        const anchor = document.createElement('a');
+        anchor.setAttribute('href', link);
+        anchor.textContent = text || link;
+        return anchor;
     }
 
     function isSolved() {
@@ -495,8 +507,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
     const id = urlParams.get('id');
-    const numCols = parseInt(urlParams.get('w')) || 10;
-    const numRows = parseInt(urlParams.get('h')) || 10;
+    
+    if(!id) {
+        document.getElementById('urlDiv').style.display = 'block';
+    }
 
     new p5((p) => sketch(p, id));
 });

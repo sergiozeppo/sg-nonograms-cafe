@@ -3,7 +3,7 @@ import { BitSeq, NUM_ALPHA_BITS } from './bitseq.js';
 const VERSION = 1;
 
 export function parseId(id) {
-	const bitSeq = new BitSeq().appendAlpha(id).getUnshuffled();
+	const bitSeq = new BitSeq().appendAlphas(id).getUnshuffled();
 
 	const reader = bitSeq.getReader();
 	const version = 1 + reader.readNum(6);
@@ -38,7 +38,7 @@ export function generateId(numRows, numCols, seed, msg, msgType, version = VERSI
 			bitSeq.appendNum(numCols, 5);
 			bitSeq.appendNum(seed, 31);
 			bitSeq.appendNum(msgType, 1);
-			bitSeq.appendAlpha(msg);
+			bitSeq.appendAlphas(msg);
 			break;
 		default:
 	}

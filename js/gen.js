@@ -9,4 +9,4 @@ const msgType = args[3] || 0;
 
 let id = nono.generateNonogram(numRows, numCols, msg, msgType);
 console.log(`ID: ${id}`);
-console.log(`Link: ${nono.PAGE_URL}?id=${id}`);
+console.log(`Link: ${nono.getPageURL(id)}`);
