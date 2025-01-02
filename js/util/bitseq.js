@@ -1,64 +1,118 @@
-class BitSequence {
-    constructor() {
-        this.bits = 0n; // Using BigInt to handle large sequences of bits
-        this.length = 0; // Length of the bit sequence
+import * as mu from './math-utils.js';
+
+const SHUFFLE_SEED = 679389209;
+export const NUM_ALPHA_BITS = 6;
+
+export class BitSeq {
+    constructor(bits = '') {
+        this.bits = bits;
     }
 
-    // Concatenates another BitSequence to this one
-    addSeq(otherBitSeq) {
-        if (!(otherBitSeq instanceof BitSequence)) {
-            throw new Error("Argument must be an instance of BitSequence");
+    append(str) {
+        this.bits += str;
+        return this;
+    }
+
+    appendNum(num, numBits = null) {
+        let binary = num.toString(2);
+        if (numBits) {
+            binary = binary.padStart(numBits, '0');
         }
-        this.bits = (this.bits << BigInt(otherBitSeq.length)) | otherBitSeq.bits;
-        this.length += otherBitSeq.length;
+        return this.append(binary);
     }
 
-    // Converts a number to bits and adds them to the sequence
-    addNum(num) {
-        if (typeof num !== 'number' || num < 0) {
-            throw new Error("Argument must be a non-negative integer");
+    appendAlpha(alpha) {
+        for(let c of alpha)
+            this.appendNum(mu.toNum(c), NUM_ALPHA_BITS);
+        return this;
+    }
+
+    prepend(str) {
+        this.bits = str + this.bits;
+        return this;
+    }
+
+    prependNum(num, numBits) {
+        let binary = num.toString(2);
+        if (numBits) {
+            binary = binary.padStart(numBits, '0');
         }
-
-        let numBits = num.toString(2); // Convert number to binary string
-        let numLength = numBits.length;
-        
-        this.bits = (this.bits << BigInt(numLength)) | BigInt(`0b${numBits}`);
-        this.length += numLength;
+        return this.prepend(binary);
     }
 
-    // Reads a certain number of bits and returns them as an integer
-    read(num) {
-        if (typeof num !== 'number' || num < 0 || num > this.length) {
-            throw new Error("Argument must be a non-negative integer within the sequence length");
-        }
-
-        let mask = (1n << BigInt(num)) - 1n; // Create a mask of `num` bits
-        let result = Number((this.bits >> BigInt(this.length - num)) & mask); // Extract the bits
-        this.bits &= ~(mask << BigInt(this.length - num)); // Remove the read bits from the sequence
-        this.length -= num;
-
-        return result;
+    prependAlpha(alpha) {
+        return this.prependNum(mu.toNum(alpha));
     }
 
-    // Helper to represent the sequence as a binary string
-    toString() {
-        return this.bits.toString(2).padStart(this.length, '0');
+    getReader() {
+        return new BitSeqReader(this.bits);
+    }
+
+    toAlpha() {
+        return this.getReader().readAlpha(Math.floor(this.length() / NUM_ALPHA_BITS));
+    }
+
+    get() {
+        return this.bits;
+    }
+
+    length() {
+        return this.bits.length;
+    }
+
+    getXOR(cipher) {
+        let myLen = this.length();
+        let oLen = cipher.length();
+        let max = Math.max(myLen, oLen);
+
+        let arr = this.get().split("");
+        let oBits = cipher.get();
+
+        for(let i = 0; i < max; i++)
+            arr[i % myLen] = (arr[i % myLen] == oBits.charAt(i % oLen) ? '0' : '1');
+
+        return new BitSeq(arr.join(""));
+    }
+
+    getShuffled() {
+        let arr = this.bits.split("");
+        let newArr = mu.shuffle(arr, SHUFFLE_SEED);
+        return new BitSeq(newArr.join(""));
+    }
+
+    getUnshuffled() {
+        let arr = this.bits.split("");
+        let newArr = mu.unshuffle(arr, SHUFFLE_SEED);
+        return new BitSeq(newArr.join(""));
     }
 }
-/*
-// Example Usage
-let seq1 = new BitSequence();
-seq1.addNum(5); // Adds 101 to the sequence
-console.log(seq1.toString()); // "101"
 
-let seq2 = new BitSequence();
-seq2.addNum(3); // Adds 11 to the sequence
-console.log(seq2.toString()); // "11"
+class BitSeqReader {
+    constructor(bits = '') {
+        this.bits = bits;
+        this.ptr = 0;
+    }
 
-seq1.addSeq(seq2);
-console.log(seq1.toString()); // "10111"
+    read(numBits = 1) {
+        let bitsLeft = this.bits.length - this.ptr;
+        if(numBits == -1 || numBits > bitsLeft)
+            numBits = bitsLeft;
+        const str = this.bits.substring(this.ptr, this.ptr + numBits);
+        this.ptr += numBits;
+        return str;
+    }
 
-let readValue = seq1.read(3); // Reads the first 3 bits (101)
-console.log(readValue); // 5
-console.log(seq1.toString()); // "11"
-*/
+    readNum(numBits = 1) {
+        return parseInt(this.read(numBits), 2);
+    }
+
+    readAlpha(numChars = 1) {
+        let charsLeft = Math.ceil(this.bits.length - this.ptr) / NUM_ALPHA_BITS;
+        if(numChars == -1 || charsLeft > -1) numChars = charsLeft;
+        let str = '';
+        for(let i = 0; i < numChars; i++) {
+            str += mu.toAlpha(this.readNum(NUM_ALPHA_BITS));
+        }
+        return str;
+    }
+}

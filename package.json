@@ -2,11 +2,11 @@
   "name": "sg-nonograms",
   "version": "1.0.0",
   "description": "Generating and playing Nonograms for SteamGifts",
-  "main": "js/main.js",
+  "main": "js/creator.js",
   "type": "module",
   "scripts": {
-    "gen": "node js/main.js",
-    "serve": "http-server -c-i",
+    "gen": "node js/creator.js",
+    "start": "nodemon --exec http-server -c-i",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -18,5 +18,9 @@
   "bugs": {
     "url": "https://github.com/RosimInc/sg-nonograms/issues"
   },
-  "homepage": "https://github.com/RosimInc/sg-nonograms#readme"
+  "homepage": "https://github.com/RosimInc/sg-nonograms#readme",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "nodemon": "^3.1.9"
+  }
 }

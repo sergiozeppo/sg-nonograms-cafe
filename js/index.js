@@ -1,4 +1,5 @@
 import * as nono from './util/nono-utils.js';
+import * as idParser from './util/id-parser.js';
 
 const sketch = (p, id) => {
     const MOUSE_BTN = {
@@ -37,6 +38,8 @@ const sketch = (p, id) => {
     let verHints;
     let maxVerHints;
 
+    let msg;
+
     let grid;
     let gridHorHints;
     let gridVerHints;
@@ -51,16 +54,13 @@ const sketch = (p, id) => {
     let movesRedo = [];
     let ended = false;
 
-    const PAGE_URL = `https://rosiminc.github.io/sg-nonograms/`;
-
     p.setup = function() {
-        console.log('WAAH')
         const canvas = p.createCanvas(500, 300);
         canvas.parent(document.getElementById('nonoDiv'));
 
         initializeColors();
 
-        loadHints();
+        loadPuzzle();
 
         resetGrid();
         resize();
@@ -80,20 +80,15 @@ const sketch = (p, id) => {
             zoom * (2 * margin + (maxVerHints + numRows) * cellSize));
     }
 
-    function loadHints() {
-        //console.log(`Id: ${id}`)
-        //const infos = getPlayerFromId(id, numCols, numRows);
-        numRows = 10;
-        numCols = 10;
-        let seed = 15;
-        const g = nono.generateGrid(numRows, numCols, seed);
-        [horHints, verHints] = nono.generateHints(g)
+    function loadPuzzle() {
+        if(!id) id = nono.generateNonogram(10, 10, null);
 
-        //numRows = infos.numRows;
-        //numCols = infos.numCols;
-        //horHints = hints[0];
-        //verHints = hints[1];
+        document.getElementById('url').value = `${nono.PAGE_URL}?id=${id}`;
 
+        let version, seed;
+        ({version, numRows, numCols, seed, msg} = idParser.parseId(id));
+
+        [horHints, verHints] = nono.getPuzzle(numRows, numCols, seed);
         maxHorHints = countMaxHints(horHints);
         maxVerHints = countMaxHints(verHints);
     }
@@ -394,8 +389,16 @@ const sketch = (p, id) => {
     function checkSolution() {
         if(!ended && isSolved()) {
             ended = true;
-            console.log("Solved!!");
+            displaySecretMessage();
         }
+    }
+
+    function displaySecretMessage() {
+        let decrypted = nono.decryptWithGrid(msg, grid);
+        const linkPar = document.getElementById('link');
+        linkPar.textContent = decrypted;
+        linkPar.style.display = 'block';
+        console.log('FOUND ' + decrypted);
     }
 
     function isSolved() {
@@ -475,13 +478,15 @@ const sketch = (p, id) => {
             zoomIn();
         } else if (p.keyCode === p.DOWN_ARROW || p.key === '-' ) {
             zoomOut();
+        } else if (p.key === 'r') {
+            resetGrid();
         }
     }
 };
 
 
 // Remove right click menu
-document.addEventListener('contextmenu', (event) => {
+document.getElementById('nonoDiv').addEventListener('contextmenu', (event) => {
     event.preventDefault();
 });
 
@@ -492,8 +497,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const id = urlParams.get('id');
     const numCols = parseInt(urlParams.get('w')) || 10;
     const numRows = parseInt(urlParams.get('h')) || 10;
-
-    console.log('Hmm?')
 
     new p5((p) => sketch(p, id));
 });
