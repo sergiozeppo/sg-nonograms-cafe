@@ -1,7 +1,7 @@
 import * as mu from './math-utils.js';
 
 const SHUFFLE_SEED = 679389209;
-const NUM_ALPHA_BITS = 6;
+export const NUM_ALPHA_BITS = 6;
 
 export class BitSeq {
     constructor(bits = '') {
@@ -10,6 +10,7 @@ export class BitSeq {
 
     append(str) {
         this.bits += str;
+        return this;
     }
 
     appendNum(num, numBits = null) {
@@ -17,16 +18,18 @@ export class BitSeq {
         if (numBits) {
             binary = binary.padStart(numBits, '0');
         }
-        this.append(binary);
+        return this.append(binary);
     }
 
     appendAlpha(alpha) {
         for(let c of alpha)
             this.appendNum(mu.toNum(c), NUM_ALPHA_BITS);
+        return this;
     }
 
     prepend(str) {
         this.bits = str + this.bits;
+        return this;
     }
 
     prependNum(num, numBits) {
@@ -34,15 +37,19 @@ export class BitSeq {
         if (numBits) {
             binary = binary.padStart(numBits, '0');
         }
-        this.prepend(binary);
+        return this.prepend(binary);
     }
 
     prependAlpha(alpha) {
-        this.prependNum(mu.toNum(alpha));
+        return this.prependNum(mu.toNum(alpha));
     }
 
     getReader() {
         return new BitSeqReader(this.bits);
+    }
+
+    toAlpha() {
+        return this.getReader().readAlpha(Math.floor(this.length() / NUM_ALPHA_BITS));
     }
 
     get() {

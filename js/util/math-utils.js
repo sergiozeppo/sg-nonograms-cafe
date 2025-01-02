@@ -1,3 +1,4 @@
+export const MAX_HASH = 0x3FFFFFFF;
 
 // https://stackoverflow.com/a/29450606
 export function getRandomizer(seed) {
@@ -16,6 +17,26 @@ export function getRandomizer(seed) {
       result /= 4294967296;
       return result;
     }
+}
+
+export function hash(vals) {
+    // Convert the values to a single number using bitwise operations
+    let hash = 0;
+
+    // Mix the values with shifts and XOR
+    for (let i = 0; i < vals.length; i++) {
+        hash ^= (vals[i] << (i * 5));  // Shift each value by a different number of bits
+    }
+
+    // You can apply further mixing here, such as rotating bits or using more XORs
+    hash = (hash ^ (hash >>> 16)) * 0x45d9f3b;
+    hash = (hash ^ (hash >>> 16)) * 0x45d9f3b;
+    hash = hash ^ (hash >>> 16);
+
+    // Final hash as a 30-bit integer
+    hash &= MAX_HASH;
+
+    return hash;
 }
 
 export function toAlpha(num) {
