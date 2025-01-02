@@ -3,6 +3,7 @@ import { BitSeq, NUM_ALPHA_BITS } from './bitseq.js';
 const VERSION = 1;
 
 export function parseId(id) {
+	console.log('id - ' + id);
 	const bitSeq = new BitSeq().appendAlpha(id).getUnshuffled();
 
 	const reader = bitSeq.getReader();
@@ -11,39 +12,36 @@ export function parseId(id) {
 	let numRows = '';
 	let numCols = '';
 	let seed = '';
+	let msgType = '';
 	let msg = '';
 
 	switch(version) {
 		case 1:
-			numRows = reader.readNum(6) + 5;
-			numCols = reader.readNum(6) + 5;
-			seed = reader.readNum(30);
+			numRows = reader.readNum(5);
+			numCols = reader.readNum(5);
+			seed = reader.readNum(31);
+			msgType = reader.readNum(1);
 			msg = reader.readAlpha(5);
 			break;
 		default:
 	}
     
-	return { version, numRows, numCols, seed, msg };
+	return { version, numRows, numCols, seed, msgType, msg };
 }
 
-export function generateId(numRows, numCols, seed, msg, version = VERSION) {
+export function generateId(numRows, numCols, seed, msg, msgType = 0, version = VERSION) {
 	let bitSeq = new BitSeq();
 	bitSeq.appendNum(version - 1, 6);
 
 	switch(version) {
 		case 1: 
-			bitSeq.appendNum(numRows - 5, 6);
-			bitSeq.appendNum(numCols - 5, 6);
-			bitSeq.appendNum(seed, 30);
+			bitSeq.appendNum(numRows, 5);
+			bitSeq.appendNum(numCols, 5);
+			bitSeq.appendNum(seed, 31);
+			bitSeq.appendNum(msgType, 1);
 			bitSeq.appendAlpha(msg);
 			break;
 		default:
-	}
-
-	const len = bitSeq.get().length;
-	if(len % NUM_ALPHA_BITS != 0) {
-		console.log('Len: ' + len)
-		bitSeq.appendNum(0, NUM_ALPHA_BITS - (len % NUM_ALPHA_BITS));
 	}
 
 	return bitSeq.getShuffled().toAlpha();

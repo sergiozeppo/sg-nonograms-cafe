@@ -1,3 +1,10 @@
+import * as mathUtils from './math-utils.js';
+import * as idParser from './id-parser.js';
+import { BitSeq } from './bitseq.js';
+
+export const PAGE_URL = `https://rosiminc.github.io/sg-nonograms/`;
+export const SG_URL = `steamgifts/`;
+
 export function solveNonogram(horHints, verHints) {
     let numRows = horHints.length;
     let numCols = verHints.length;
@@ -7,15 +14,12 @@ export function solveNonogram(horHints, verHints) {
     
     findInitialPossibilities(analysis);
 
-    // XXX console.log('Initial possibilities!');
-    
     let turn = 0;
     let insights = [0];
     while(insights.length > 0) {
         let dirAnalysis = analysis[turn % 2];
         
         if(turn > 0) {
-            // XXX console.log(`\n\n - Turn ${turn+1} -\n`);
             applyInsights(insights, grid, dirAnalysis); // Reduce possibilities
         }
 
@@ -24,17 +28,7 @@ export function solveNonogram(horHints, verHints) {
         turn++;
     }
 
-    let isUnique = hasUniqueSolution(analysis)
-
-    // XXX console.log(`\n -- End --\n`)
-    if(isUnique) {
-        console.log('Found unique solution!');
-    } else {
-        console.log('No unique solution...');
-    }
-    displayGrid(grid);
-
-    return isUnique;
+    return hasUniqueSolution(analysis);
 }
 
 function hasUniqueSolution(analysis) {
@@ -48,7 +42,6 @@ function hasUniqueSolution(analysis) {
 function applyInsights(insights, grid, analysis) {
     if(insights == null) return;
 
-    // XXX console.log(`Applying ${insights.length} insights`);
     for(let i of insights) {
         let row = i.line * analysis.dir + i.pos * (1 - analysis.dir);
         let col = i.line * (1 - analysis.dir) + i.pos * analysis.dir;
@@ -57,7 +50,6 @@ function applyInsights(insights, grid, analysis) {
         let line = analysis.lines[i.pos];
         line.possibilities = reducePossibilities(line.possibilities, i);
     }
-    // XXX displayGrid(grid);
 }
 
 // Removes all possibilities that contradict the insight
@@ -188,82 +180,66 @@ function listPossibilities(numSpots, numFillers, current = [], results = []) {
     return results;
 }
 
+function getGridBinary(grid) {
+    displayGrid(grid);
+    let bitSeq = new BitSeq();
+
+    for(let row = 0; row < grid.length; row++)
+        for(let col = 0; col < grid[0].length; col++)
+            bitSeq.append(grid[row][col] == 1 ? '1' : '0');
+
+    console.log(bitSeq.get())
+
+    return bitSeq;
+}
+
+export function decryptWithGrid(msg, grid) {
+    let msgSeq = new BitSeq().appendAlpha(msg);
+    let gridSeq = getGridBinary(grid);
+    return msgSeq.getXOR(gridSeq).toAlpha();
+}
+
+export function getPuzzle(numRows, numCols, seed) {
+    const grid = generateGrid(numRows, numCols, seed);
+    return generateHints(grid)
+}
+
 // Takes in a secret code and sizes
 // Returns an id
-export function generateNonogramLink(numRows, numCols, message) {
-    let seed = getSeedFromValues(numRows, numCols, message);
-    let cipher = null;
+export function generateNonogram(numRows, numCols, message, type = 0) {
+    let seed;
+    if(message) {
+        seed = mathUtils.hash(message.split("").map(v => mathUtils.toNum(v)));
+    } else {
+        message = 'Top 1';
+        seed = Math.floor(Math.random()*100000000);
+    }
+    
+    let solved = false;
+    let grid;
 
-    while(!cipher) {
-        console.log(`Seed: ${seed}`);
-        let grid = generateGrid(numRows, numCols, seed);
+    while(!solved) {
+        grid = generateGrid(numRows, numCols, seed);
         let hints = generateHints(grid);
-
-        if(solveNonogram(hints[0], hints[1])) {
-            cipher = 'lol';
-        } else {
+        solved = solveNonogram(hints[0], hints[1])
+        
+        if(!solved)
             seed++;
-        }
     }
 
-    console.log('Done!')
+    const toEncrypt = new BitSeq().appendAlpha(message);
+    const cipher = getGridBinary(grid);
+
+    const encrypted = toEncrypt.getXOR(cipher).toAlpha();
+
+    return idParser.generateId(numRows, numCols, seed, encrypted);
 }
 
-/*function getPlayerFromId(id, numRows, numCols) {
-    // TODO FROM ID
-    // Extract seed
-    // Extract numRows
-    // Extract numCols
-    // Extract encoded
-
-    console.log(`Creating with ${id} - ${numRows} - ${numCols}`);
-
-    const seed = getSeedFromValues(numRows, numCols, id);
-    const infos = generateHints(numRows, numCols, seed);
-
-    return {
-        numRows: numRows,
-        numCols: numCols,
-        encoded: 'blah',
-        horHints: infos.horHints,
-        verHints: infos.verHints
-    };
-}*/
-
-function getSeedFromValues(numRows, numCols, code) {
-    console.log(`Generating for ${numRows}, ${numCols}, ${code}`)
-    let vals = Array.from(code).map(c => mf.toNum(c));
-    vals.push(numRows);
-    vals.push(numCols);
-
-    // Convert the values to a single number using bitwise operations
-    let hash = 0;
-
-    // Mix the values with shifts and XOR
-    for (let i = 0; i < vals.length; i++) {
-        hash ^= (vals[i] << (i * 5));  // Shift each value by a different number of bits
-    }
-
-    // You can apply further mixing here, such as rotating bits or using more XORs
-    hash = (hash ^ (hash >>> 16)) * 0x45d9f3b;
-    hash = (hash ^ (hash >>> 16)) * 0x45d9f3b;
-    hash = hash ^ (hash >>> 16);
-
-    // Final hash as a 32-bit integer
-    hash &= 0xFFFFFFFF;
-
-    return hash;
-}
-
-// Takes in a seed and sizes
-// Returns hints
-export function generateHints(grid) {
+function generateHints(grid) {
     let numRows = grid.length;
     let numCols = grid[0].length;
     let horHints = [];
     let verHints = [];
-
-    // TODO Z Reduce duplicated code
 
     for(let row = 0; row < numRows; row++) {
         let hints = [];
@@ -303,7 +279,7 @@ export function generateHints(grid) {
 }
 
 export function generateGrid(numRows, numCols, seed) {
-    const rd = getRandomizer(seed);
+    const rd = mathUtils.getRandomizer(seed);
 
     const ratio = 0.4 + 0.4 * rd(); // 40% to 80%
     const totalCells = numRows * numCols;
@@ -322,8 +298,6 @@ export function generateGrid(numRows, numCols, seed) {
         grid.push(cells.slice(i * numCols, (i + 1) * numCols));
     }
 
-    //displayGrid(grid); // TODO Rem
-
     return grid;
 }
 
@@ -332,6 +306,7 @@ export function getEmptyGrid(numRows, numCols) {
 }
 
 export function displayGrid(grid) {
+    if(!grid) return;
     const numRows = grid.length;
     const numCols = grid[0].length;
     let str = '';

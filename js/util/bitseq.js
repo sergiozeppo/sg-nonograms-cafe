@@ -61,7 +61,17 @@ export class BitSeq {
     }
 
     getXOR(cipher) {
+        let myLen = this.length();
+        let oLen = cipher.length();
+        let max = Math.max(myLen, oLen);
 
+        let arr = this.get().split("");
+        let oBits = cipher.get();
+
+        for(let i = 0; i < max; i++)
+            arr[i % myLen] = (arr[i % myLen] == oBits.charAt(i % oLen) ? '0' : '1');
+
+        return new BitSeq(arr.join(""));
     }
 
     getShuffled() {
@@ -84,6 +94,9 @@ class BitSeqReader {
     }
 
     read(numBits = 1) {
+        let bitsLeft = this.bits.length - this.ptr;
+        if(numBits == -1 || numBits > bitsLeft)
+            numBits = bitsLeft;
         const str = this.bits.substring(this.ptr, this.ptr + numBits);
         this.ptr += numBits;
         return str;
@@ -94,6 +107,8 @@ class BitSeqReader {
     }
 
     readAlpha(numChars = 1) {
+        let charsLeft = Math.ceil(this.bits.length - this.ptr) / NUM_ALPHA_BITS;
+        if(numChars == -1 || charsLeft > -1) numChars = charsLeft;
         let str = '';
         for(let i = 0; i < numChars; i++) {
             str += mu.toAlpha(this.readNum(NUM_ALPHA_BITS));

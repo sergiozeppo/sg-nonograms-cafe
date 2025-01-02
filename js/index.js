@@ -1,4 +1,5 @@
 import * as nono from './util/nono-utils.js';
+import * as idParser from './util/id-parser.js';
 
 const sketch = (p, id) => {
     const MOUSE_BTN = {
@@ -37,6 +38,8 @@ const sketch = (p, id) => {
     let verHints;
     let maxVerHints;
 
+    let msg;
+
     let grid;
     let gridHorHints;
     let gridVerHints;
@@ -50,8 +53,6 @@ const sketch = (p, id) => {
     let movesUndo = [];
     let movesRedo = [];
     let ended = false;
-
-    const PAGE_URL = `https://rosiminc.github.io/sg-nonograms/`;
 
     p.setup = function() {
         const canvas = p.createCanvas(500, 300);
@@ -80,25 +81,17 @@ const sketch = (p, id) => {
     }
 
     function loadHints() {
-        //console.log(`Id: ${id}`)
-        //const infos = getPlayerFromId(id, numCols, numRows);
-        numRows = 10;
-        numCols = 10;
-        let seed = 15;
-        const g = nono.generateGrid(numRows, numCols, seed);
-        [horHints, verHints] = nono.generateHints(g)
+        if(!id) id = nono.generateNonogram(10, 10, null);
 
-        //numRows = infos.numRows;
-        //numCols = infos.numCols;
-        //horHints = hints[0];
-        //verHints = hints[1];
+        let version, seed;
+        ({version, numRows, numCols, seed, msg} = idParser.parseId(id));
 
+        [horHints, verHints] = nono.getPuzzle(numRows, numCols, seed);
         maxHorHints = countMaxHints(horHints);
         maxVerHints = countMaxHints(verHints);
     }
 
     function resetGrid() {
-        console.log('Reset!');
         grid = nono.getEmptyGrid(numRows, numCols);
 
         gridHorHints = [];
@@ -394,8 +387,13 @@ const sketch = (p, id) => {
     function checkSolution() {
         if(!ended && isSolved()) {
             ended = true;
-            console.log("Solved!!");
+            displaySecretMessage();
         }
+    }
+
+    function displaySecretMessage() {
+        let decrypted = nono.decryptWithGrid(msg, grid);
+        console.log('FOUND ' + decrypted);
     }
 
     function isSolved() {

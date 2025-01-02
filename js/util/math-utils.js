@@ -1,10 +1,7 @@
-export const MAX_HASH = 0x3FFFFFFF;
+export const MAX_HASH = 0x7FFFFFFF;
 
 // https://stackoverflow.com/a/29450606
 export function getRandomizer(seed) {
-	if(!seed)
-		return Math.random;
-	
     var mask = 0xffffffff;
     var m_w  = (123456789 + seed) & mask;
     var m_z  = (987654321 - seed) & mask;
@@ -33,7 +30,7 @@ export function hash(vals) {
     hash = (hash ^ (hash >>> 16)) * 0x45d9f3b;
     hash = hash ^ (hash >>> 16);
 
-    // Final hash as a 30-bit integer
+    // Final hash as a 31-bit integer
     hash &= MAX_HASH;
 
     return hash;
