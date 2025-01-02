@@ -28,7 +28,7 @@ export function solveNonogram(horHints, verHints) {
         turn++;
     }
 
-    return hasUniqueSolution(analysis);
+    return hasUniqueSolution(analysis) ? grid : null;
 }
 
 function hasUniqueSolution(analysis) {
@@ -190,11 +190,11 @@ function getGridBinary(grid) {
     return bitSeq;
 }
 
-export function decryptWithGrid(msg, msgType, grid) {
-    let msgSeq = new BitSeq().appendAlphas(msg);
+export function decryptWithGrid(enc, msgType, grid) {
+    console.log(`${enc.get()} ${msgType}`)
     let gridSeq = getGridBinary(grid);
-    let decrypted = msgSeq.getXOR(gridSeq);
-    return msgType == 0 ? decrypted.toChars() : decrypted.toAlphas();
+    let decSeq = enc.getXOR(gridSeq);
+    return msgType == 0 ? decSeq.toChars() : decSeq.toAlphas();
 }
 
 export function getPuzzle(numRows, numCols, seed) {
@@ -202,7 +202,7 @@ export function getPuzzle(numRows, numCols, seed) {
     return generateHints(grid);
 }
 
-export function generateNonogram(numRows, numCols, message, msgType = 0) {
+export function generateNonogram(numRows, numCols, message, msgType) {
     let seed;
     if(message) {
         seed = mathUtils.hash(message.split("").map(v => mathUtils.charToNum(v)));
@@ -230,9 +230,11 @@ export function generateNonogram(numRows, numCols, message, msgType = 0) {
         toEncrypt.appendAlphas(message);
     const cipher = getGridBinary(grid);
 
-    const encrypted = toEncrypt.getXOR(cipher).toAlphas();
+    const enc = toEncrypt.getXOR(cipher);
+    console.log(`Encrypting ${message} to ${toEncrypt.get()} (${enc.length()} bits)`);
+    console.log(`Cipher: ${cipher.get()}`);
 
-    return idParser.generateId(numRows, numCols, seed, encrypted, msgType);
+    return idParser.generateId(numRows, numCols, seed, enc, msgType);
 }
 
 function generateHints(grid) {

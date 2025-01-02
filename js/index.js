@@ -38,7 +38,7 @@ const sketch = (p, id) => {
     let verHints;
     let maxVerHints;
 
-    let msg;
+    let enc;
     let msgType;
 
     let grid;
@@ -83,12 +83,10 @@ const sketch = (p, id) => {
 
     function loadPuzzle() {
         if(!id) id = nono.generateNonogram(10, 10, null);
-        console.log(nono.getPageURL(id))
-
         document.getElementById('url').value = nono.getPageURL(id);
 
         let seed;
-        ({numRows, numCols, seed, msg, msgType} = idParser.parseId(id));
+        ({numRows, numCols, seed, enc, msgType} = idParser.parseId(id));
 
         [horHints, verHints] = nono.getPuzzle(numRows, numCols, seed);
         maxHorHints = countMaxHints(horHints);
@@ -396,7 +394,7 @@ const sketch = (p, id) => {
     }
 
     function displaySecretMessage() {
-        let code = nono.decryptWithGrid(msg, msgType, grid);
+        let code = nono.decryptWithGrid(enc, msgType, grid);
         const msgPar = document.getElementById('message');
         if(msgType == 0) {
             msgPar.textContent = code;

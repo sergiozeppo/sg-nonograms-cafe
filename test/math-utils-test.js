@@ -1,7 +1,8 @@
 import * as mathUtils from '../js/util/math-utils.js';
 
-testAlpha();
-testChar();
+//testAlpha();
+//testChar();
+testOther();
 
 function testAlpha() {
 	console.log(mathUtils.ALPHAS.length);
@@ -21,4 +22,15 @@ function testChar() {
 	console.log(ch);
 	console.log(num);
 	console.log(mathUtils.numToChar(num));
+}
+
+function testOther() {
+	let str = 'Aèlol&^^©"';
+	let arr = str.split("");
+	console.log(arr);
+	for(let ch of arr) {
+		let num = mathUtils.charToNum(ch)
+		console.log(num)
+	}
+	
 }

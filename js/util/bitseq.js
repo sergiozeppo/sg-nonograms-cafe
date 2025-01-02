@@ -39,11 +39,11 @@ export class BitSeq {
     }
 
     toAlphas() {
-        return this.getReader().readAlphas(Math.floor(this.length() / NUM_ALPHA_BITS));
+        return this.getReader().readAlphas();
     }
 
     toChars() {
-        return this.getReader().readChars(Math.floor(this.length() / NUM_CHAR_BITS));
+        return this.getReader().readChars();
     }
 
     get() {
@@ -71,12 +71,17 @@ export class BitSeq {
     getShuffled() {
         let arr = this.bits.split("");
         let newArr = mathUtils.shuffle(arr, SHUFFLE_SEED);
+
+        //console.log(`Before shuffle:   ${arr.join('')}`);
+        //console.log(`After shuffle:    ${newArr.join('')}`);
         return new BitSeq(newArr.join(""));
     }
 
     getUnshuffled() {
         let arr = this.bits.split("");
         let newArr = mathUtils.unshuffle(arr, SHUFFLE_SEED);
+        //console.log(`Before unshuffle: ${arr.join('')}`);
+        //console.log(`After unshuffle:  ${newArr.join('')}`);
         return new BitSeq(newArr.join(""));
     }
 }
@@ -87,22 +92,29 @@ class BitSeqReader {
         this.ptr = 0;
     }
 
-    read(numBits = 1) {
-        let bitsLeft = this.bits.length - this.ptr;
-        if(numBits == -1 || numBits > bitsLeft)
-            numBits = bitsLeft;
+    read(numBits) {
+        if(numBits === 0) return '';
+
+        let bitsLeft = this.left();
+        if(numBits == undefined || numBits == null || numBits > bitsLeft) numBits = bitsLeft;
+
+        //console.log(`Bits left: ${numBits}`)
+
         const str = this.bits.substring(this.ptr, this.ptr + numBits);
         this.ptr += numBits;
         return str;
     }
 
-    readNum(numBits = 1) {
-        return parseInt(this.read(numBits), 2);
+    readNum(numBits) {
+        return numBits === 0 ? 0 : parseInt(this.read(numBits), 2);
     }
 
-    readAlphas(numChars = 1) {
-        let charsLeft = Math.floor(this.bits.length - this.ptr) / NUM_ALPHA_BITS;
-        if(numChars == -1 || charsLeft > -1) numChars = charsLeft;
+    readAlphas(numChars) {
+        if(numChars === 0) return '';
+
+        let charsLeft = Math.floor(this.left() / NUM_ALPHA_BITS);
+        if(numChars === undefined || numChars === null  || numChars > charsLeft) numChars = charsLeft;
+
         let str = '';
         for(let i = 0; i < numChars; i++) {
             str += mathUtils.numToAlpha(this.readNum(NUM_ALPHA_BITS));
@@ -110,13 +122,20 @@ class BitSeqReader {
         return str;
     }
 
-    readChars(numChars = 1) {
-        let charsLeft = Math.floor(this.bits.length - this.ptr) / NUM_CHAR_BITS;
-        if(numChars == -1 || charsLeft > -1) numChars = charsLeft;
+    readChars(numChars) {
+        if(numChars === 0) return '';
+
+        let charsLeft = Math.floor(this.left() / NUM_CHAR_BITS);
+        if(numChars === undefined || numChars === null || numChars > charsLeft) numChars = charsLeft;
+
         let str = '';
         for(let i = 0; i < numChars; i++) {
             str += mathUtils.numToChar(this.readNum(NUM_CHAR_BITS));
         }
         return str;
+    }
+
+    left() {
+        return this.bits.length - this.ptr;
     }
 }

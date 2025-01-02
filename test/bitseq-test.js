@@ -2,8 +2,8 @@ import { BitSeq } from '../js/util/bitseq.js';
 import * as idParser from '../js/util/id-parser.js';
 
 //testBitSeq();
-//testIdParser();
-testXOR();
+testIdParser();
+//testXOR();
 
 function testXOR() {
 	let bs1 = new BitSeq('1100');
@@ -39,8 +39,8 @@ function testBitSeq() {
 }
 
 function testIdParser() {
-	let id = idParser.generateId(5, 7, 99998888, 'h3lL0');
-	let {version, numRows, numCols, seed, msg} = idParser.parseId(id);
+	let id = idParser.generateId(5, 7, 998, 'h3lL0');
+	let {version, numRows, numCols, seed, msg, msgType} = idParser.parseId(id);
 
 	console.log(`id: ${id}`);
 	console.log(`version: ${version}`);
@@ -48,4 +48,5 @@ function testIdParser() {
 	console.log(`numCols: ${numCols}`);
 	console.log(`seed: ${seed}`);
 	console.log(`msg: ${msg}`);
+	console.log(`msgType: ${msgType}`);
 }
