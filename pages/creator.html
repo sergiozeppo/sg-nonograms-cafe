@@ -4,27 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RosimInc's Nonogram Café - Creator</title>
-    <script src="scripts/creator.js"></script>
-    <script src="scripts/main.js"></script>
+    <script src="../js/creator.js" type="module"></script>
+    <link rel="stylesheet" href="../styles/creator.css">
+    <link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
 </head>
 <body>
-    <h1>RosimInc's Nonogram Café</h1>
-    <h2>Nonogram Creator</h2>
-    
-    <form id="creationForm">
-        <label for="name">Name:</label><br>
-        <input type="text" id="name" name="name" required><br><br>
-    
-        <label for="secretText">Secret Text:</label><br>
-        <input type="text" id="secretText" name="secretText" required><br><br>
+    <div class="content">
+        <h1>RosimInc's Nonogram Café</h1>
+        <h2>Nonogram Creator</h2>
         
-        <label for="width">Width (4-35):</label><br>
-        <input type="number" id="width" name="width" min="4" max="35" required><br><br>
-        
-        <label for="height">Height (4-35):</label><br>
-        <input type="number" id="height" name="height" min="4" max="35" required><br><br>
-        
-        <button type="button">Create!</button>
+        <form id="creationForm">
+            <label for="numRows">Rows (4-25):</label><br>
+            <input type="number" id="numRows" name="numRows" value="10" min="4" max="35" required><br><br>
+            <label for="numCols">Columns (4-25):</label><br>
+            <input type="number" id="numCols" name="numCols" value="10" min="4" max="35" required><br><br>
+            
+            <label for="secretText">Secret:</label><br>
+            <input type="text" id="secretText" name="secretText" value="Abcd3" required>
+            <label for="sg">SG</label>
+            <input type="checkbox" id="sg" name="SG" checked="true"><br><br>
+
+            <button type="button">Create!</button>
         </form>
+        <div id="linkDiv">
+            <p id="link"></p>
+        </div>
+    </div>
 </body>
 </html>

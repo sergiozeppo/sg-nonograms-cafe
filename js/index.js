@@ -401,7 +401,7 @@ const sketch = (p, id) => {
         } else {
             msgPar.appendChild(getAnchor(nono.getSteamGiftsURL(code)));
         }
-        msgPar.style.display = 'block';
+        document.getElementById("solvedDiv").style.display = 'block';
     }
 
     function getAnchor(link, text = null) {
