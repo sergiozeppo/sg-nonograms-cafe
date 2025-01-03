@@ -488,7 +488,7 @@ const sketch = (p, id) => {
             zoomIn();
         } else if (p.keyCode === p.DOWN_ARROW || p.key === '-' ) {
             zoomOut();
-        } else if (p.key === 'r') {
+        } else if (p.key === 'r' && p.keyIsDown(p.CONTROL)) {
             resetGrid();
         }
     }
