@@ -320,7 +320,11 @@ export function displayGrid(grid) {
 }
 
 export function getPageURL(id) {
-    return `${PAGE_URL}?id=${id}`;
+    let link = PAGE_URL;
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+        link = "http://127.0.0.1:8080/";
+    }
+    return `${link}?id=${id}`;
 }
 
 export function getSteamGiftsURL(code) {
