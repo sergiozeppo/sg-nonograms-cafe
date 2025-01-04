@@ -2,18 +2,10 @@ import * as nono from './util/nono-utils.js';
 import * as idParser from './util/id-parser.js';
 
 const sketch = (p, id) => {
-    const MOUSE_BTN = {
-        NONE: 0,
-        LEFT: 1,
-        RIGHT: 2,
-        MID: 3
-    };
-
     const ACTION_TYPE = {
-        CELL: 0,
-        HOR_HINT: 1,
-        VER_HINT: 2,
-        GROUP: 3
+        MARK_CELL: 0,
+        TOGGLE_HOR_HINT: 1,
+        TOGGLE_VER_HINT: 2
     }
     
     const CELL_MARK = {
@@ -21,6 +13,11 @@ const sketch = (p, id) => {
         BLACK: 1,
         WHITE: 2
     };
+
+    const EVENT = {
+        MOUSE: 0,
+        TOUCH: 1
+    }
 
     const ZOOM_FACTOR = 1.2;
     const FADED = 150; // TODO Put it in the color palette
@@ -47,9 +44,8 @@ const sketch = (p, id) => {
 
     let cellColors;
 
-    let mouseDown = MOUSE_BTN.NONE;
-    let filling;
-    let currAction;
+    let actionEvent;
+    let actions = [];
 
     let movesUndo = [];
     let movesRedo = [];
@@ -104,10 +100,10 @@ const sketch = (p, id) => {
         for(let hints of verHints)
             gridVerHints.push(Array(hints.length).fill(0));
         
+        actionEvent = null;
         movesUndo = [];
         movesRedo = [];
         ended = false;
-        mouseDown = MOUSE_BTN.NONE;
     }
 
     function countMaxHints(hints) {
@@ -212,177 +208,188 @@ const sketch = (p, id) => {
         p.fill(0, 70);
         
         if(mouseInfo.inGridY && (mouseInfo.inGridX || mouseInfo.inHintsX)) {
-            let numHints = horHints[mouseInfo.mouseRow].length;
-            p.rect(-numHints * cellSize - 1, mouseInfo.mouseRow * cellSize - 1,
+            let numHints = horHints[mouseInfo.row].length;
+            p.rect(-numHints * cellSize - 1, mouseInfo.row * cellSize - 1,
                 (numHints + numCols) * cellSize + 2, cellSize + 2);
         }
         
         if(mouseInfo.inGridX && (mouseInfo.inGridY || mouseInfo.inHintsY)) {
-            let numHints = verHints[mouseInfo.mouseCol].length
-            p.rect(mouseInfo.mouseCol * cellSize - 1, -numHints * cellSize - 1,
+            let numHints = verHints[mouseInfo.col].length
+            p.rect(mouseInfo.col * cellSize - 1, -numHints * cellSize - 1,
                 cellSize + 2, (numHints + numRows) * cellSize + 2);
         }
     }
 
     function getMouseInfo() {
-        let inCanvas = !(p.mouseX < 0 || p.mouseX >= p.width || p.mouseY < 0 || p.mouseY >= p.height);;
+        return getEventInfo(p.mouseX, p.mouseY, EVENT.MOUSE, p.mouseButton);
+    }
 
-        let mouseCol = Math.floor((p.mouseX/zoom - margin)/cellSize) - maxHorHints;
-        let mouseRow = Math.floor((p.mouseY/zoom - margin)/cellSize) - maxVerHints;
+    function getTouchInfo(touch) {
+        return getEventInfo(touch.x, touch.y, EVENT.TOUCH);
+    }
 
-        let inGridX = (mouseCol >= 0 && mouseCol < numCols);
-        let inHintsX = (mouseCol < 0 && mouseCol > (-1-maxHorHints));
-        let inGridY = (mouseRow >= 0 && mouseRow < numRows);
-        let inHintsY = (mouseRow < 0 && mouseRow > (-1-maxVerHints));
+    function getEventInfo(x, y, type, button = -1) {
+        let inCanvas = !(x < 0 || x >= p.width || y < 0 || y >= p.height);;
 
-        return { mouseCol, mouseRow, inCanvas,
+        let col = Math.floor((x/zoom - margin) / cellSize) - maxHorHints;
+        let row = Math.floor((y/zoom - margin) / cellSize) - maxVerHints;
+
+        let inGridX = (col >= 0 && col < numCols);
+        let inHintsX = (col < 0 && col > (-1 - maxHorHints));
+        let inGridY = (row >= 0 && row < numRows);
+        let inHintsY = (row < 0 && row > (-1 - maxVerHints));
+
+        return { type, button, col, row, inCanvas,
             inGridX, inGridY, inHintsX, inHintsY
         };
     }
 
+    p.touchStarted = function() {
+        if(touches.length == 1)
+            handleEvent(getTouchInfo(touches[0]));
+    }
+
     p.mousePressed = function() {
-        const mouseInfo = getMouseInfo();
-        if(!mouseInfo.inCanvas)
+        handleEvent(getMouseInfo());
+    }
+    
+    function handleEvent(eventInfo) {
+        if(!eventInfo.inCanvas)
             return;
 
-        if(mouseInfo.inGridX) {
-            if(mouseInfo.inGridY) { // Inside the grid
-                clickInGrid(mouseInfo.mouseRow, mouseInfo.mouseCol);
-            } else if(mouseInfo.inHintsY) { // Inside the ver hints
-                clickInVerHints(-1 - mouseInfo.mouseRow, mouseInfo.mouseCol);
-            }
-        } else if(mouseInfo.inHintsX && mouseInfo.inGridY) { // Inside the hor hints
-            clickInHorHints(mouseInfo.mouseRow, -1 - mouseInfo.mouseCol);
+        if(eventInfo.inGridX && eventInfo.inGridY)
+            clickInGrid(eventInfo);
+        else if(eventInfo.inGridX || eventInfo.inGridY) {
+            clickInHints(eventInfo);
         }
     }
 
     p.mouseReleased = function() {
-        let btn = MOUSE_BTN.NONE;
-        if(p.mouseButton == p.LEFT)
-            btn = MOUSE_BTN.LEFT;
-        else if(p.mouseButton == p.RIGHT)
-            btn = MOUSE_BTN.RIGHT;
-        else if(p.mouseButton == p.CENTER)
-            btn = MOUSE_BTN.MID;
-
-        if(btn == mouseDown) {
-            mouseDown = MOUSE_BTN.NONE;
+        if(p.mouseButton == actionEvent?.button) {
+            actionEvent = null;
         }
     }
 
     function mouseMoved() {
-        if(mouseDown == MOUSE_BTN.NONE)
+        if(!actionEvent || actions.length == 0)
             return;
 
+        let action = actions[0];
         const mouseInfo = getMouseInfo();
-        if(mouseInfo.inGridX && mouseInfo.inGridY) {
-            let currVal = grid[mouseInfo.mouseRow][mouseInfo.mouseCol];
-            if(filling != currVal) {
-                addSubAction({type: ACTION_TYPE.CELL, row: mouseInfo.mouseRow, col: mouseInfo.mouseCol,
-                    from: currVal, to: filling});
+        if(action.type == ACTION_TYPE.MARK_CELL) {
+            if(mouseInfo.inGridX && mouseInfo.inGridY) {
+                let currVal = grid[mouseInfo.row][mouseInfo.col];
+                
+                if((action.from == CELL_MARK.EMPTY && currVal == CELL_MARK.EMPTY) ||
+                        (action.to == CELL_MARK.EMPTY && currVal == action.from) ||
+                        (action.from != CELL_MARK.EMPTY && action.to != CELL_MARK.EMPTY && currVal != action.to))
+                    addAction({type: ACTION_TYPE.MARK_CELL,
+                        row: mouseInfo.row, col: mouseInfo.col,
+                        from: currVal, to: action.to});
             }
-        }
+        } /*else if(action.type == ACTION_TYPE.TOGGLE_HINT) {
+            // TODO HINTS
+        }*/
     }
 
-    function clickInGrid(mouseRow, mouseCol) {
-        let currVal = grid[mouseRow][mouseCol];
+    function clickInGrid(eventInfo) {
+        const currVal = grid[eventInfo.row][eventInfo.col];
         let nextVal = CELL_MARK.EMPTY;
-        let btn = MOUSE_BTN.NONE;
 
-        if(p.mouseButton == p.LEFT) {
-            btn = MOUSE_BTN.LEFT;
-            nextVal = currVal == CELL_MARK.BLACK ? CELL_MARK.EMPTY : CELL_MARK.BLACK;
-        } else if(p.mouseButton == p.RIGHT) {
-            btn = MOUSE_BTN.RIGHT;
-            nextVal = currVal == CELL_MARK.WHITE ? CELL_MARK.EMPTY : CELL_MARK.WHITE;
-        } else if(p.mouseButton == p.CENTER) {
-            btn = MOUSE_BTN.MID;
+        if(eventInfo.type == EVENT.MOUSE) {
+            if(eventInfo.button == p.LEFT)
+                nextVal = currVal == CELL_MARK.BLACK ? CELL_MARK.EMPTY : CELL_MARK.BLACK;
+            else if(eventInfo.button == p.RIGHT)
+                nextVal = currVal == CELL_MARK.WHITE ? CELL_MARK.EMPTY : CELL_MARK.WHITE;
+        } else if(eventInfo.type == EVENT.TOUCH) {
+            nextVal = (currVal + 1) % 3;
         }
 
-        if(nextVal != currVal) {
-            mouseDown = btn;
-            filling = nextVal;
-            doAction({type: ACTION_TYPE.GROUP, subs: []});
-            addSubAction({type: ACTION_TYPE.CELL, row: mouseRow, col: mouseCol,
-                from: currVal, to: nextVal});
-        }
+        if(currVal != nextVal)
+            setAction({type: ACTION_TYPE.MARK_CELL, 
+                row: eventInfo.row, col: eventInfo.col,
+                from: currVal, to: nextVal}, eventInfo);
     }
 
-    function clickInHorHints(mouseRow, mouseCol) {
+    function clickInHints(eventInfo) {
+        // TODO
+
+        /*clickInHorHints(eventInfo.mouseRow, -1 - eventInfo.mouseCol);
+        clickInVerHints(-1 - eventInfo.mouseRow, eventInfo.mouseCol);
+
         let hints = gridHorHints[mouseRow];
         let num = hints.length;
         if(mouseCol < num)
-            doAction({type: ACTION_TYPE.HOR_HINT, row: mouseRow, num: num - mouseCol - 1});
+            doAction({type: ACTION_TYPE.HOR_HINT, row: mouseRow, num: num - mouseCol - 1});*/
     }
 
-    function clickInVerHints(mouseRow, mouseCol) {
+    /*function clickInVerHints(mouseRow, mouseCol) {
         let hints = gridVerHints[mouseCol];
         let num = hints.length;
         if(mouseRow < num)
             doAction({type: ACTION_TYPE.VER_HINT, col: mouseCol, num: num - mouseRow - 1});
+    }*/
+
+    function setAction(action, eventInfo = null) {
+        clearActions();
+        actionEvent = eventInfo;
+        addAction(action);
     }
 
-    function addSubAction(action) {
+    function addAction(action) {
         apply(action);
-        currAction.subs.push(action);
+        actions.push(action);
     }
 
-    function doAction(action) {
-        if(action.type == ACTION_TYPE.GROUP) {
-            currAction = action;
-        } else {
-            apply(action);
+    function clearActions() {
+        actionEvent = null;
+        if(actions && actions.length > 0) {
+            movesUndo.push(actions);
+            movesRedo = [];
         }
-        movesUndo.push(action);
-        movesRedo = [];
+        actions = [];
     }
 
     function undo() {
-        mouseDown = MOUSE_BTN.NONE;
+        // TODO REM console.log(`Undo: %j`, movesUndo);
         if(movesUndo.length == 0)
             return;
-        let action = movesUndo.pop();
-        unapply(action);
-        movesRedo.push(action);
+        clearActions();
+
+        let currActions = movesUndo.pop();
+        for(let action of currActions)
+            unapply(action);
+        movesRedo.push(currActions);
     }
 
     function redo() {
-        mouseDown = MOUSE_BTN.NONE;
+        // TODO REM console.log(`Redo: %j`, movesRedo);
         if(movesRedo.length == 0)
             return;
-        let action = movesRedo.pop();
-        apply(action);
-        movesUndo.push(action);
+        clearActions();
+        
+        let currActions = movesRedo.pop();
+        for(let action of currActions)
+            apply(action);
+        movesUndo.push(currActions);
     }
 
     function apply(action) {
-        if(action.type == ACTION_TYPE.CELL) {
+        if(action.type == ACTION_TYPE.MARK_CELL) {
             grid[action.row][action.col] = action.to;
             checkSolution();
-        } else if(action.type == ACTION_TYPE.HOR_HINT) {
+        } else if(action.type == ACTION_TYPE.TOGGLE_HINT) {
             let hints = gridHorHints[action.row];
             hints[action.num] = 1 - hints[action.num];
-        } else if(action.type == ACTION_TYPE.VER_HINT) {
-            let hints = gridVerHints[action.col];
-            hints[action.num] = 1 - hints[action.num];
-        } else if(action.type == ACTION_TYPE.GROUP) {
-            for(let sub of action.subs)
-                apply(sub);
         }
     }
 
     function unapply(action) {
-        if(action.type == ACTION_TYPE.CELL) {
+        if(action.type == ACTION_TYPE.MARK_CELL) {
             grid[action.row][action.col] = action.from;
-        } else if(action.type == ACTION_TYPE.HOR_HINT) {
+        } else if(action.type == ACTION_TYPE.TOGGLE_HINT) {
             let hints = gridHorHints[action.row];
             hints[action.num] = 1 - hints[action.num];
-        } else if(action.type == ACTION_TYPE.VER_HINT) {
-            let hints = gridVerHints[action.col];
-            hints[action.num] = 1 - hints[action.num];
-        } else if(action.type == ACTION_TYPE.GROUP) {
-            for(let sub of action.subs)
-                unapply(sub);
         }
     }
 
@@ -494,8 +501,12 @@ const sketch = (p, id) => {
     }
 };
 
+// Disable selection
+document.getElementById('nonoDiv').addEventListener('mousedown', (event) => {
+    event.preventDefault();
+});
 
-// Remove right click menu
+// Disable right click context menu
 document.getElementById('nonoDiv').addEventListener('contextmenu', (event) => {
     event.preventDefault();
 });
