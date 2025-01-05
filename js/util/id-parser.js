@@ -1,11 +1,9 @@
-import { BitSeq, NUM_CHAR_BITS, NUM_ALPHA_BITS } from './bitseq.js';
+import { BitSeq, NUM_ALPHA_BITS } from './bitseq.js';
 
 const VERSION = 1;
 
 export function parseId(id) {
-	const bitSeq = new BitSeq().appendAlphas(id).getUnshuffled();
-
-	const reader = bitSeq.getReader();
+	const reader = new BitSeq().appendAlphas(id).getUnshuffled().getReader();
 	const version = 1 + reader.readNum(6);
 
 	let numRows = '';

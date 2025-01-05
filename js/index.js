@@ -61,6 +61,7 @@ const sketch = (p, id) => {
         loadPuzzle();
 
         resetGrid();
+        loadState();
         resize();
     }
 
@@ -105,6 +106,26 @@ const sketch = (p, id) => {
         movesUndo = [];
         movesRedo = [];
         ended = false;
+    }
+
+    function loadState() {
+        const encodedState = localStorage.getItem(id);
+        if(!encodedState)
+            return;
+
+        nono.decodeGridState(grid, encodedState);
+        checkSolution();
+    }
+
+    function saveState() {
+        if(ended)
+            return;
+        const encodedState = nono.encodeGridState(grid);
+        localStorage.setItem(id, encodedState);
+    }
+
+    function deleteState() {
+        localStorage.removeItem(id);
     }
 
     function countMaxHints(hints) {
@@ -395,7 +416,6 @@ const sketch = (p, id) => {
     }
 
     function undo() {
-        // TODO REM console.log(`Undo: %j`, movesUndo);
         if(movesUndo.length == 0)
             return;
         clearActions();
@@ -407,7 +427,6 @@ const sketch = (p, id) => {
     }
 
     function redo() {
-        // TODO REM console.log(`Redo: %j`, movesRedo);
         if(movesRedo.length == 0)
             return;
         clearActions();
@@ -429,6 +448,7 @@ const sketch = (p, id) => {
             let hints = gridVerHints[action.col];
             hints[action.index] = 1 - hints[action.index];
         }
+        saveState();
     }
 
     function unapply(action) {
@@ -441,10 +461,12 @@ const sketch = (p, id) => {
             let hints = gridVerHints[action.col];
             hints[action.index] = 1 - hints[action.index];
         }
+        saveState();
     }
 
     function checkSolution() {
         if(!ended && isSolved()) {
+            saveState();
             ended = true;
             displaySecretMessage();
         }
@@ -547,6 +569,7 @@ const sketch = (p, id) => {
             zoomOut();
         } else if (p.key === 'r' && p.keyIsDown(p.CONTROL)) {
             resetGrid();
+            deleteState();
         }
     }
 };
