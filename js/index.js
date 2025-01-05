@@ -80,7 +80,11 @@ const sketch = (p, id) => {
     }
 
     function loadPuzzle() {
-        if(!id) id = nono.generateNonogram(10, 10, null, 0);
+        if(!id) {
+            id = nono.generateNonogram(10, 10, null, 0);
+            const newUrl = `${window.location.pathname}?id=${id}`;
+            window.history.pushState({}, '', newUrl);
+        }
         document.getElementById('url').value = nono.getPageURL(id);
 
         let seed;
