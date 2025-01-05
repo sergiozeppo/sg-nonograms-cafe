@@ -26,6 +26,7 @@ const sketch = (p, id) => {
 
     let margin = 12;
     let cellSize = 30;
+    let crossSize = cellSize/6;
 
     let numRows;
     let horHints;
@@ -132,7 +133,6 @@ const sketch = (p, id) => {
     }
 
     function drawGrid() {
-        p.stroke(0);
         for(let row = 0; row < numRows; row++) {
             for(let col = 0; col < numCols; col++) {
                 let gridVal = grid[row][col];
@@ -143,16 +143,27 @@ const sketch = (p, id) => {
                     cellColor = p.lerpColor(cellColor, p.color('white'), 0.5);
                 }
 
+                
+                p.stroke(0);
                 p.strokeWeight(1);
                 p.fill(cellColor);
                 p.rect(col * cellSize, row * cellSize, cellSize, cellSize);
 
-                p.strokeWeight(5);
-                if(gridVal == CELL_MARK.WHITE)
-                    p.point((col + 0.5) * cellSize, (row + 0.5) * cellSize);
+                if(gridVal == CELL_MARK.WHITE) {
+                    p.noFill();
+                    p.stroke(160,0,0);
+                    p.strokeWeight(2);
+                    p.strokeCap(p.SQUARE)
+                    let centerX = (col + 0.5) * cellSize;
+                    let centerY = (row + 0.5) * cellSize;
+                    p.line(centerX - crossSize, centerY - crossSize, centerX + crossSize, centerY + crossSize);
+                    p.line(centerX - crossSize, centerY + crossSize, centerX + crossSize, centerY - crossSize);
+                    p.strokeCap(p.ROUND);
+                }
             }
         }
 
+        p.stroke(0);
         p.noFill();
         p.strokeWeight(3);
         for(let row = 0; row < numRows; row+=5) {
@@ -160,7 +171,6 @@ const sketch = (p, id) => {
 
             for(let col = 0; col < numCols; col += 5) {
                 let colLen = Math.min(numCols - col, 5);
-
                 p.rect(col * cellSize, row * cellSize, colLen * cellSize, rowLen * cellSize);
             }
         }
@@ -229,7 +239,7 @@ const sketch = (p, id) => {
     }
 
     function getEventInfo(x, y, type, button = -1) {
-        let inCanvas = !(x < 0 || x >= p.width || y < 0 || y >= p.height);;
+        let inCanvas = !(x < 0 || x >= p.width || y < 0 || y >= p.height);
 
         let col = Math.floor((x/zoom - margin) / cellSize) - maxHorHints;
         let row = Math.floor((y/zoom - margin) / cellSize) - maxVerHints;
@@ -240,8 +250,7 @@ const sketch = (p, id) => {
         let inHintsY = (row < 0 && row > (-1 - maxVerHints));
 
         return { type, button, col, row, inCanvas,
-            inGridX, inGridY, inHintsX, inHintsY
-        };
+            inGridX, inGridY, inHintsX, inHintsY };
     }
 
     p.touchStarted = function() {
@@ -257,11 +266,13 @@ const sketch = (p, id) => {
         if(!eventInfo.inCanvas)
             return;
 
-        if(eventInfo.inGridX && eventInfo.inGridY)
-            clickInGrid(eventInfo);
-        else if(eventInfo.inGridX || eventInfo.inGridY) {
-            clickInHints(eventInfo);
-        }
+        if(eventInfo.inGridX) {
+            if(eventInfo.inGridY)
+                clickInGrid(eventInfo);
+            else if(eventInfo.inHintsY)
+                clickInVerHints(eventInfo);
+        } else if(eventInfo.inHintsX && eventInfo.inGridY)
+            clickInHorHints(eventInfo);
     }
 
     p.mouseReleased = function() {
@@ -287,9 +298,35 @@ const sketch = (p, id) => {
                         row: mouseInfo.row, col: mouseInfo.col,
                         from: currVal, to: action.to});
             }
-        } /*else if(action.type == ACTION_TYPE.TOGGLE_HINT) {
-            // TODO HINTS
-        }*/
+        } else if(action.type == ACTION_TYPE.TOGGLE_HOR_HINT) {
+            if(mouseInfo.inGridY && mouseInfo.inHintsX && mouseInfo.row == action.row) {
+                let hints = gridHorHints[mouseInfo.row];
+                let col = -1 - mouseInfo.col;
+                let numHints = hints.length;
+                if(col < numHints) {
+                    let index = numHints - col - 1;
+                    let currVal = hints[index];
+                    if(currVal == action.from)
+                        addAction({type: ACTION_TYPE.TOGGLE_HOR_HINT,
+                            row: mouseInfo.row, index: index,
+                            from: currVal});
+                }
+            }
+        } else if(action.type == ACTION_TYPE.TOGGLE_VER_HINT) {
+            if(mouseInfo.inGridX && mouseInfo.inHintsY && mouseInfo.col == action.col) {
+                let hints = gridVerHints[mouseInfo.col];
+                let row = -1 - mouseInfo.row;
+                let numHints = hints.length;
+                if(row < numHints) {
+                    let index = numHints - row - 1;
+                    let currVal = hints[index];
+                    if(currVal == action.from)
+                        addAction({type: ACTION_TYPE.TOGGLE_VER_HINT,
+                            col: mouseInfo.col, index: index,
+                            from: currVal});
+                }
+            }
+        }
     }
 
     function clickInGrid(eventInfo) {
@@ -311,24 +348,31 @@ const sketch = (p, id) => {
                 from: currVal, to: nextVal}, eventInfo);
     }
 
-    function clickInHints(eventInfo) {
-        // TODO
-
-        /*clickInHorHints(eventInfo.mouseRow, -1 - eventInfo.mouseCol);
-        clickInVerHints(-1 - eventInfo.mouseRow, eventInfo.mouseCol);
-
-        let hints = gridHorHints[mouseRow];
-        let num = hints.length;
-        if(mouseCol < num)
-            doAction({type: ACTION_TYPE.HOR_HINT, row: mouseRow, num: num - mouseCol - 1});*/
+    function clickInHorHints(eventInfo) {
+        let col = -1 - eventInfo.col;
+        let hints = gridHorHints[eventInfo.row];
+        let numHints = hints.length;
+        if(col < numHints) {
+            let index = numHints - col - 1;
+            let currVal = hints[index];
+            setAction({type: ACTION_TYPE.TOGGLE_HOR_HINT,
+                row: eventInfo.row, index: index,
+                from: currVal}, eventInfo);
+        }
     }
 
-    /*function clickInVerHints(mouseRow, mouseCol) {
-        let hints = gridVerHints[mouseCol];
-        let num = hints.length;
-        if(mouseRow < num)
-            doAction({type: ACTION_TYPE.VER_HINT, col: mouseCol, num: num - mouseRow - 1});
-    }*/
+    function clickInVerHints(eventInfo) {
+        let row = -1 - eventInfo.row;
+        let hints = gridVerHints[eventInfo.col];
+        let numHints = hints.length;
+        if(row < numHints) {
+            let index = numHints - row - 1;
+            let currVal = hints[index];
+            setAction({type: ACTION_TYPE.TOGGLE_VER_HINT,
+                col: eventInfo.col, index: index,
+                from: currVal}, eventInfo);
+        }
+    }
 
     function setAction(action, eventInfo = null) {
         clearActions();
@@ -378,18 +422,24 @@ const sketch = (p, id) => {
         if(action.type == ACTION_TYPE.MARK_CELL) {
             grid[action.row][action.col] = action.to;
             checkSolution();
-        } else if(action.type == ACTION_TYPE.TOGGLE_HINT) {
+        } else if(action.type == ACTION_TYPE.TOGGLE_HOR_HINT) {
             let hints = gridHorHints[action.row];
-            hints[action.num] = 1 - hints[action.num];
+            hints[action.index] = 1 - hints[action.index];
+        } else if(action.type == ACTION_TYPE.TOGGLE_VER_HINT) {
+            let hints = gridVerHints[action.col];
+            hints[action.index] = 1 - hints[action.index];
         }
     }
 
     function unapply(action) {
         if(action.type == ACTION_TYPE.MARK_CELL) {
             grid[action.row][action.col] = action.from;
-        } else if(action.type == ACTION_TYPE.TOGGLE_HINT) {
+        } else if(action.type == ACTION_TYPE.TOGGLE_HOR_HINT) {
             let hints = gridHorHints[action.row];
-            hints[action.num] = 1 - hints[action.num];
+            hints[action.index] = 1 - hints[action.index];
+        } else if(action.type == ACTION_TYPE.TOGGLE_VER_HINT) {
+            let hints = gridVerHints[action.col];
+            hints[action.index] = 1 - hints[action.index];
         }
     }
 
