@@ -78,7 +78,7 @@ const sketch = (p, id) => {
     }
 
     function loadPuzzle() {
-        if(!id) id = nono.generateNonogram(10, 10, null);
+        if(!id) id = nono.generateNonogram(10, 10, null, 0);
         document.getElementById('url').value = nono.getPageURL(id);
 
         let seed;
