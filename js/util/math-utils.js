@@ -3,6 +3,7 @@ export const ALPHAS = Array.from("-_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR
 export const ALPHA_TO_NUM = new Map(ALPHAS.map((alpha, index) => [alpha, index]));
 export const CHARS = Array.from("� !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~éèêëàâçîïôùûœáíóúñÉÈÊËÀÂÇÎÏÔÙÛŒÁÍÓÚÑ");
 export const CHAR_TO_NUM = new Map(CHARS.map((char, index) => [char, index]));
+export const BASE64_BITS = 8;
 
 // https://stackoverflow.com/a/29450606
 export function getRandomizer(seed) {
@@ -100,5 +101,5 @@ export function binaryToBase64(binaryStr) {
 
 export function base64ToBinary(base64Str) {
 	const binaryBuffer = atob(base64Str).split("").map(char => char.charCodeAt(0));
-	return binaryBuffer.map(byte => byte.toString(2).padStart(8, "0")).join("");
+	return binaryBuffer.map(byte => byte.toString(2).padStart(BASE64_BITS, "0")).join("");
 }

@@ -304,7 +304,7 @@ export function getEmptyGrid(numRows, numCols) {
     return Array.from({ length: numRows }, () => Array(numCols).fill(0));
 }
 
-export function encodeGridState(grid) {
+export function encodeGameState(grid, gridHorHints, gridVerHints) {
     const numRows = grid.length;
     const numCols = grid[0].length;
 
@@ -313,11 +313,21 @@ export function encodeGridState(grid) {
         for(let col = 0; col < numCols; col++)
             bitSeq.appendNum(grid[row][col], 2);
 
-    console.log(mathUtils.shuffle([1,2,3], 12))
+    for(let row of gridHorHints)
+        for(let num of row)
+            bitSeq.appendNum(num, 1);
+
+    for(let col of gridVerHints)
+        for(let num of col)
+            bitSeq.appendNum(num, 1);
+
+    bitSeq.fillToMultiple(mathUtils.BASE64_BITS);
+
     return mathUtils.binaryToBase64(bitSeq.get());
 }
 
-export function decodeGridState(grid, encodedState) {
+export function decodeGameState(grid, gridHorHints, gridVerHints, encodedState) {
+    const b = new BitSeq(mathUtils.base64ToBinary(encodedState));
     const reader = new BitSeq(mathUtils.base64ToBinary(encodedState)).getReader();
 
     const numRows = grid.length;
@@ -326,6 +336,14 @@ export function decodeGridState(grid, encodedState) {
     for(let row = 0; row < numRows; row++)
         for(let col = 0; col < numCols; col++)
             grid[row][col] = reader.readNum(2);
+        
+    for(let row of gridHorHints)
+        for(let num in row)
+            row[num] = reader.readNum(1);
+
+    for(let col of gridVerHints)
+        for(let num in col)
+            col[num] = reader.readNum(1);
 }
 
 export function displayGrid(grid) {

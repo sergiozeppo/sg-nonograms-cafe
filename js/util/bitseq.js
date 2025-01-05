@@ -34,6 +34,13 @@ export class BitSeq {
         return this;
     }
 
+    fillToMultiple(num) {
+        const len = this.length();
+        const gap = (num - len % num) % num;
+		this.appendNum(0, gap);
+        return this;
+    }
+
     getReader() {
         return new BitSeqReader(this.bits);
     }

@@ -113,14 +113,14 @@ const sketch = (p, id) => {
         if(!encodedState)
             return;
 
-        nono.decodeGridState(grid, encodedState);
+        nono.decodeGameState(grid, gridHorHints, gridVerHints, encodedState);
         checkSolution();
     }
 
     function saveState() {
         if(ended)
             return;
-        const encodedState = nono.encodeGridState(grid);
+        const encodedState = nono.encodeGameState(grid, gridHorHints, gridVerHints);
         localStorage.setItem(id, encodedState);
     }
 
@@ -570,6 +570,8 @@ const sketch = (p, id) => {
         } else if (p.key === 'r' && p.keyIsDown(p.CONTROL)) {
             resetGrid();
             deleteState();
+        } else if (p.key == 'q' && p.keyIsDown(p.CONTROL)) {
+            localStorage.clear();
         }
     }
 };
@@ -584,7 +586,7 @@ document.getElementById('nonoDiv').addEventListener('contextmenu', (event) => {
     event.preventDefault();
 });
 
-// Load id
+// On page load, read id and start sketch
 document.addEventListener('DOMContentLoaded', () => {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
