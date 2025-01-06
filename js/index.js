@@ -166,8 +166,7 @@ const sketch = (p, id) => {
                     cellColor = p.lerpColor(cellColor, p.color('white'), 0.5);
                 }
                 
-                p.stroke(0);
-                p.strokeWeight(1);
+                p.noStroke();
                 p.fill(cellColor);
                 p.rect(col * cellSize, row * cellSize, cellSize, cellSize);
 
@@ -187,14 +186,15 @@ const sketch = (p, id) => {
 
         p.stroke(0);
         p.noFill();
-        p.strokeWeight(3);
-        for(let row = 0; row < numRows; row+=5) {
-            let rowLen = Math.min(numRows - row, 5);
-
-            for(let col = 0; col < numCols; col += 5) {
-                let colLen = Math.min(numCols - col, 5);
-                p.rect(col * cellSize, row * cellSize, colLen * cellSize, rowLen * cellSize);
-            }
+        for(let row = 0; row <= numRows; row++) {
+            p.strokeWeight((row == numRows || row % 5 == 0) ? 3 : 1);
+            p.line(-maxHorHints * cellSize, row * cellSize,
+                numCols * cellSize, row * cellSize);
+        }
+        for(let col = 0; col <= numCols; col++) {
+            p.strokeWeight((col == numCols || col % 5 == 0) ? 3 : 1);
+            p.line(col * cellSize, -maxVerHints * cellSize,
+                col * cellSize, numRows * cellSize);
         }
     }
 
@@ -240,15 +240,13 @@ const sketch = (p, id) => {
         p.fill(0, 70);
         
         if(mouseInfo.inGridY && (mouseInfo.inGridX || mouseInfo.inHintsX)) {
-            let numHints = horHints[mouseInfo.row].length;
-            p.rect(-numHints * cellSize - 1, mouseInfo.row * cellSize - 1,
-                (numHints + numCols) * cellSize + 2, cellSize + 2);
+            p.rect(-maxHorHints * cellSize - 1, mouseInfo.row * cellSize - 1,
+                (maxHorHints + numCols) * cellSize + 2, cellSize + 2);
         }
         
         if(mouseInfo.inGridX && (mouseInfo.inGridY || mouseInfo.inHintsY)) {
-            let numHints = verHints[mouseInfo.col].length
-            p.rect(mouseInfo.col * cellSize - 1, -numHints * cellSize - 1,
-                cellSize + 2, (numHints + numRows) * cellSize + 2);
+            p.rect(mouseInfo.col * cellSize - 1, -maxVerHints * cellSize - 1,
+                cellSize + 2, (maxVerHints + numRows) * cellSize + 2);
         }
     }
 
@@ -568,6 +566,16 @@ const sketch = (p, id) => {
         resize();
     }
 
+    function reset() {
+        resetGrid();
+        deleteState();
+    }
+
+    function clearAllCache() {
+        resetGrid();
+        localStorage.clear();
+    }
+
     p.keyPressed = function() {
         if (p.keyCode === p.RIGHT_ARROW || (p.key === 'y' && p.keyIsDown(p.CONTROL))) {
             redo();
@@ -577,11 +585,10 @@ const sketch = (p, id) => {
             zoomIn();
         } else if (p.keyCode === p.DOWN_ARROW || p.key === '-' ) {
             zoomOut();
-        } else if (p.key === 'r' && p.keyIsDown(p.CONTROL)) {
-            resetGrid();
-            deleteState();
-        } else if (p.key == 'q' && p.keyIsDown(p.CONTROL)) {
-            localStorage.clear();
+        } else if (p.key === 'R' && p.keyIsDown(p.SHIFT)) {
+            reset();
+        } else if (p.key == 'Q' && p.keyIsDown(p.SHIFT)) {
+            clearAllCache();
         }
     }
 };
