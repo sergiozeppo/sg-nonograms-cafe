@@ -3,6 +3,7 @@ export const ALPHAS = Array.from("-_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR
 export const ALPHA_TO_NUM = new Map(ALPHAS.map((alpha, index) => [alpha, index]));
 export const CHARS = Array.from("� !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~éèêëàâçîïôùûœáíóúñÉÈÊËÀÂÇÎÏÔÙÛŒÁÍÓÚÑ");
 export const CHAR_TO_NUM = new Map(CHARS.map((char, index) => [char, index]));
+export const BASE64_BITS = 8;
 
 // https://stackoverflow.com/a/29450606
 export function getRandomizer(seed) {
@@ -65,30 +66,40 @@ export function xToNum(arr, char) {
 }
 
 export function shuffle(arr, seed) {
-		const rng = getRandomizer(seed);
-		const newArr = [...arr];
-		const rngNums = [];
-		const len = newArr.length;
+	const rng = getRandomizer(seed);
+	const newArr = [...arr];
+	const rngNums = [];
+	const len = newArr.length;
 
-		for(let i = 1; i < len; i++)
-			rngNums.push(rng());
+	for(let i = 1; i < len; i++)
+		rngNums.push(rng());
 
-		for (let i = 1; i < len; i++) {
-			const j = Math.floor(rngNums[len - i - 1] * (i + 1));
-			[newArr[i], newArr[j]] = [newArr[j], newArr[i]];
-		}
-
-		return newArr;
+	for (let i = 1; i < len; i++) {
+		const j = Math.floor(rngNums[len - i - 1] * (i + 1));
+		[newArr[i], newArr[j]] = [newArr[j], newArr[i]];
 	}
 
-	export function unshuffle(arr, seed = 42) {
-		const rng = getRandomizer(seed);
-		const newArr = [...arr];
+	return newArr;
+}
+
+export function unshuffle(arr, seed = 42) {
+	const rng = getRandomizer(seed);
+	const newArr = [...arr];
+
+	for (let i = newArr.length - 1; i > 0; i--) {
+		const j = Math.floor(rng() * (i + 1));
+		[newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+	}
 	
-		for (let i = newArr.length - 1; i > 0; i--) {
-			const j = Math.floor(rng() * (i + 1));
-			[newArr[i], newArr[j]] = [newArr[j], newArr[i]];
-		}
-		
-		return newArr;
-	}
+	return newArr;
+}
+
+export function binaryToBase64(binaryStr) {
+	const uint8Array = new Uint8Array(binaryStr.match(/.{1,8}/g).map(b => parseInt(b, 2)));
+	return btoa(String.fromCharCode(...uint8Array));
+}
+
+export function base64ToBinary(base64Str) {
+	const binaryBuffer = atob(base64Str).split("").map(char => char.charCodeAt(0));
+	return binaryBuffer.map(byte => byte.toString(2).padStart(BASE64_BITS, "0")).join("");
+}
