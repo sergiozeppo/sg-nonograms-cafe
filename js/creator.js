@@ -32,14 +32,8 @@ function createNonogram() {
 	let id = nono.generateNonogram(numRows, numCols, secretText, msgType);
 
 	const linkCmp = document.getElementById("link");
-	linkCmp.innerHTML = '';
-	linkCmp.appendChild(getAnchor(nono.getPageURL(id)));
+	const link = nono.getPageURL(id);
+	linkCmp.setAttribute('href', link);
+	linkCmp.textContent = link;
 	document.getElementById("linkDiv").style.display = "block";
-}
-
-function getAnchor(link, text = null) {
-	const anchor = document.createElement('a');
-	anchor.setAttribute('href', link);
-	anchor.textContent = text || link;
-	return anchor;
 }
