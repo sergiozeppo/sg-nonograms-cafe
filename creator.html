@@ -3,29 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RosimInc's Nonogram Café - Creator</title>
+    <title>Create Your Nono!</title>
     <script src="./js/creator.js" type="module"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="./styles/creator.css">
     <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
 </head>
 <body>
-    <div class="content">
+    <div class="m-4 container">
         <h1>RosimInc's Nonogram Café</h1>
         <h2>Nonogram Creator</h2>
         
-        <form id="creationForm">
-            <label for="numRows">Rows (4-25):</label><br>
-            <input type="number" id="numRows" name="numRows" value="10" min="4" max="35" required><br><br>
-            <label for="numCols">Columns (4-25):</label><br>
-            <input type="number" id="numCols" name="numCols" value="10" min="4" max="35" required><br><br>
-            
-            <label for="secretText">Secret:</label><br>
-            <input type="text" id="secretText" name="secretText" value="Abcd3" required>
-
-            <button type="button">Create!</button>
-        </form>
-        <div id="linkDiv">
-            <p id="link"></p>
+        <div>
+            <form id="creationForm">
+                <div class="m-2">
+                    <label for="numRows" class="fw-bold">Rows (4-25):</label>
+                    <input type="number" id="numRows" class="form-control" name="numRows" value="10" min="4" max="25" required>
+                </div>
+                <div class="m-2">
+                    <label for="numCols" class="fw-bold">Columns (4-25):</label>
+                    <input type="number" id="numCols" class="form-control" name="numCols" value="10" min="4" max="25" required>
+                </div>
+                <div class="m-2">
+                    <label for="secretText" class="fw-bold">Secret:</label>
+                    <input type="text" id="secretText" class="form-control" name="secretText" value="Abcd3" required>
+                </div>
+                <div class="m-2">
+                    <button type="button" id="createBtn" class="btn btn-primary">Create!</button>
+                </div>
+            </form>
+            <div id="linkDiv" class="m-2 p-2 bg-info bg-opacity-10 border border-info rounded-start rounded-end">
+                <a href="#" target="_blank" id="link"></a>
+            </div>
         </div>
     </div>
 </body>

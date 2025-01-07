@@ -22,6 +22,8 @@ const sketch = (p, id) => {
     const ZOOM_FACTOR = 1.2;
     const FADED = 150; // TODO Put it in the color palette
 
+    let canvas;
+
     let zoom = 1;
 
     let margin = 12;
@@ -53,8 +55,9 @@ const sketch = (p, id) => {
     let ended = false;
 
     p.setup = function() {
-        const canvas = p.createCanvas(500, 300);
+        canvas = p.createCanvas(500, 300);
         canvas.parent(document.getElementById('nonoDiv'));
+        canvas.touchStarted((ev) => ev.preventDefault());
 
         initializeColors();
 
@@ -63,6 +66,16 @@ const sketch = (p, id) => {
         resetGrid();
         loadState();
         resize();
+
+        setupButtons();
+    }
+
+    function setupButtons() {
+        document.getElementById("undoBtn").addEventListener("click", undo);
+        document.getElementById("redoBtn").addEventListener("click", redo);
+        document.getElementById("zoomInBtn").addEventListener("click", zoomIn);
+        document.getElementById("zoomOutBtn").addEventListener("click", zoomOut);
+        document.getElementById("resetBtn").addEventListener("click", reset);
     }
 
     function initializeColors() {
@@ -85,7 +98,6 @@ const sketch = (p, id) => {
             const newUrl = `${window.location.pathname}?id=${id}`;
             window.history.pushState({}, '', newUrl);
         }
-        document.getElementById('url').value = nono.getPageURL(id);
 
         let seed;
         ({numRows, numCols, seed, enc, msgType} = idParser.parseId(id));
@@ -107,8 +119,7 @@ const sketch = (p, id) => {
             gridVerHints.push(Array(hints.length).fill(0));
         
         actionEvent = null;
-        movesUndo = [];
-        movesRedo = [];
+        emptyUndoRedo();
         ended = false;
     }
 
@@ -273,28 +284,35 @@ const sketch = (p, id) => {
             inGridX, inGridY, inHintsX, inHintsY };
     }
 
-    p.touchStarted = function() {
+    p.touchStarted = function(event) {
+        if(event.target !== canvas.elt) {
+            return;
+        }
         if(p.touches.length == 1)
             handleEvent(getTouchInfo(p.touches[0]));
         return false;
     }
 
-    p.touchMoved = function() {
+    p.touchMoved = function(event) {
+        if(event.target !== canvas.elt)
+            return;
         return false;
     }
 
-    p.touchEnded = function() {
+    p.touchEnded = function(event) {
+        clearActions();
+        if(event.target !== canvas.elt)
+            return;
         return false;
     }
 
-    p.mousePressed = function() {
+    p.mousePressed = function(event) {
+        if(event.target !== canvas.elt)
+            return;
         handleEvent(getMouseInfo());
     }
     
     function handleEvent(eventInfo) {
-        if(!eventInfo.inCanvas)
-            return;
-
         if(eventInfo.inGridX) {
             if(eventInfo.inGridY)
                 clickInGrid(eventInfo);
@@ -304,13 +322,15 @@ const sketch = (p, id) => {
             clickInHorHints(eventInfo);
     }
 
-    p.mouseReleased = function() {
+    p.mouseReleased = function(event) {
         if(p.mouseButton == actionEvent?.button) {
-            actionEvent = null;
+            clearActions();
         }
     }
 
-    p.mouseDragged = function() {
+    p.mouseDragged = function(event) {
+        if(event.target !== canvas.elt)
+            return;
         if(!actionEvent || actions.length == 0)
             return;
 
@@ -417,10 +437,21 @@ const sketch = (p, id) => {
     function clearActions() {
         actionEvent = null;
         if(actions && actions.length > 0) {
-            movesUndo.push(actions);
-            movesRedo = [];
+            addUndo(actions);
         }
         actions = [];
+    }
+
+    function emptyUndoRedo() {
+        movesUndo = [];
+        movesRedo = [];
+        updateUndoRedoButtons();
+    }
+
+    function addUndo(actions) {
+        movesUndo.push(actions);
+        movesRedo = [];
+        updateUndoRedoButtons();
     }
 
     function undo() {
@@ -432,6 +463,8 @@ const sketch = (p, id) => {
         for(let action of currActions)
             unapply(action);
         movesRedo.push(currActions);
+
+        updateUndoRedoButtons();
     }
 
     function redo() {
@@ -443,6 +476,13 @@ const sketch = (p, id) => {
         for(let action of currActions)
             apply(action);
         movesUndo.push(currActions);
+
+        updateUndoRedoButtons();
+    }
+
+    function updateUndoRedoButtons() {
+        document.getElementById('undoBtn').disabled = (movesUndo.length == 0);
+        document.getElementById('redoBtn').disabled = (movesRedo.length == 0);
     }
 
     function apply(action) {
@@ -494,6 +534,7 @@ const sketch = (p, id) => {
     function getAnchor(link, text = null) {
         const anchor = document.createElement('a');
         anchor.setAttribute('href', link);
+        anchor.setAttribute('target', '_blank');
         anchor.textContent = text || link;
         return anchor;
     }
@@ -603,15 +644,15 @@ document.getElementById('nonoDiv').addEventListener('contextmenu', (event) => {
     event.preventDefault();
 });
 
+document.getElementById("createBtn").addEventListener("click", function() {
+    window.open("creator", "_blank");
+});
+
 // On page load, read id and start sketch
 document.addEventListener('DOMContentLoaded', () => {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
     const id = urlParams.get('id');
-    
-    if(!id) {
-        document.getElementById('urlDiv').style.display = 'block';
-    }
 
     new p5((p) => sketch(p, id));
 });
