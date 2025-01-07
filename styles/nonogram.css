@@ -4,6 +4,6 @@ body {
     font-family: Arial, sans-serif; /* Sets a clean font */
 }
 
-#solvedDiv {
+#msgDiv {
     display: none;
 }

@@ -26,8 +26,27 @@
 
         <div id="nonoDiv"></div>
         
-        <div id="solvedDiv" class="my-2 p-2 bg-info bg-opacity-10 border border-info rounded-start rounded-end">
-            <p id="message"></p>
+        <div id="msgDiv" class="my-2 p-2 bg-success bg-opacity-10 border border-success rounded fw-bold"></div>
+
+        <div id="instructions" class="p-2 bg-info bg-opacity-10 border border-info rounded">
+            <h3>Instructions</h3>
+            <ul>
+                <li>Fill squares so that groups of squares match the hints of that row/column</li>
+                <li>Groups must be separated by one or more empty squares</li><br>
+                <li>Click to fill a cell</li>
+                <li>Right-click to mark with an X that it cannot be filled</li>
+                <li>Click or right-click again to remove the marking</li>
+                <li>Click on a hint to toggle if it's grayed out</li>
+                <li>Dragging is enabled</li>
+                <li>Touch controls for mobile also enabled</li>
+                <li>Ctrl+Z or left arrow to undo</li>
+                <li>Ctrl+Y or right arrow to redo</li>
+                <li>+ key or up arrow to zoom in</li>
+                <li>- key or down arrow to zoom out</li>
+                <li>Shift+R to reset puzzle progress (this cannot be undone)</li>
+                <li>Shift+Q to clear all cache (this will reset all puzzles)</li>
+                <li>Progress will be kept between sessions (but not the undo/redo history)</li>
+            </ul>
         </div>
     </div>
 </body>

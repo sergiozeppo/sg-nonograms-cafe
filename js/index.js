@@ -522,13 +522,12 @@ const sketch = (p, id) => {
 
     function displaySecretMessage() {
         let code = nono.decryptWithGrid(enc, msgType, grid);
-        const msgPar = document.getElementById('message');
-        if(msgType == 0) {
-            msgPar.textContent = code;
-        } else {
-            msgPar.appendChild(getAnchor(nono.getSteamGiftsURL(code)));
-        }
-        document.getElementById("solvedDiv").style.display = 'block';
+        const msgDiv = document.getElementById('msgDiv');
+        if(msgType == 0)
+            msgDiv.textContent = code;
+        else
+            msgDiv.appendChild(getAnchor(nono.getSteamGiftsURL(code)));
+        msgDiv.style.display = 'block';
     }
 
     function getAnchor(link, text = null) {
