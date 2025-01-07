@@ -270,8 +270,6 @@ const sketch = (p, id) => {
     }
 
     function getEventInfo(x, y, type, button = -1) {
-        let inCanvas = !(x < 0 || x >= p.width || y < 0 || y >= p.height);
-
         let col = Math.floor((x/zoom - margin) / cellSize) - maxHorHints;
         let row = Math.floor((y/zoom - margin) / cellSize) - maxVerHints;
 
@@ -280,7 +278,7 @@ const sketch = (p, id) => {
         let inGridY = (row >= 0 && row < numRows);
         let inHintsY = (row < 0 && row > (-1 - maxVerHints));
 
-        return { type, button, col, row, inCanvas,
+        return { type, button, col, row,
             inGridX, inGridY, inHintsX, inHintsY };
     }
 
@@ -289,13 +287,15 @@ const sketch = (p, id) => {
             return;
         }
         if(p.touches.length == 1)
-            handleEvent(getTouchInfo(p.touches[0]));
+            handleClickEvent(getTouchInfo(p.touches[0]));
         return false;
     }
 
     p.touchMoved = function(event) {
         if(event.target !== canvas.elt)
             return;
+        if(p.touches.length == 1)
+            handleDragEvent(getTouchInfo(p.touches[0]));
         return false;
     }
 
@@ -309,10 +309,10 @@ const sketch = (p, id) => {
     p.mousePressed = function(event) {
         if(event.target !== canvas.elt)
             return;
-        handleEvent(getMouseInfo());
+        handleClickEvent(getMouseInfo());
     }
     
-    function handleEvent(eventInfo) {
+    function handleClickEvent(eventInfo) {
         if(eventInfo.inGridX) {
             if(eventInfo.inGridY)
                 clickInGrid(eventInfo);
@@ -331,47 +331,49 @@ const sketch = (p, id) => {
     p.mouseDragged = function(event) {
         if(event.target !== canvas.elt)
             return;
-        if(!actionEvent || actions.length == 0)
-            return;
+        if(actionEvent && actions.length > 0)
+            handleDragEvent(getMouseInfo());
+    }
 
+    function handleDragEvent(eventInfo) {
         let action = actions[0];
-        const mouseInfo = getMouseInfo();
         if(action.type == ACTION_TYPE.MARK_CELL) {
-            if(mouseInfo.inGridX && mouseInfo.inGridY) {
-                let currVal = grid[mouseInfo.row][mouseInfo.col];
+            if(eventInfo.inGridX && eventInfo.inGridY) {
+                let currVal = grid[eventInfo.row][eventInfo.col];
                 
-                if((action.from == CELL_MARK.EMPTY && currVal == CELL_MARK.EMPTY) ||
+                if((eventInfo.type == EVENT.TOUCH && currVal != action.to) ||
+                        (action.from == CELL_MARK.EMPTY && currVal == CELL_MARK.EMPTY) ||
                         (action.to == CELL_MARK.EMPTY && currVal == action.from) ||
                         (action.from != CELL_MARK.EMPTY && action.to != CELL_MARK.EMPTY && currVal != action.to))
                     addAction({type: ACTION_TYPE.MARK_CELL,
-                        row: mouseInfo.row, col: mouseInfo.col,
+                        row: eventInfo.row, col: eventInfo.col,
                         from: currVal, to: action.to});
             }
         } else if(action.type == ACTION_TYPE.TOGGLE_HOR_HINT) {
-            if(mouseInfo.inGridY && mouseInfo.inHintsX && mouseInfo.row == action.row) {
-                let hints = gridHorHints[mouseInfo.row];
-                let col = -1 - mouseInfo.col;
+            if(eventInfo.inGridY && eventInfo.inHintsX && eventInfo.row == action.row) {
+                let hints = gridHorHints[eventInfo.row];
+                let col = -1 - eventInfo.col;
                 let numHints = hints.length;
                 if(col < numHints) {
                     let index = numHints - col - 1;
                     let currVal = hints[index];
                     if(currVal == action.from)
                         addAction({type: ACTION_TYPE.TOGGLE_HOR_HINT,
-                            row: mouseInfo.row, index: index,
+                            row: eventInfo.row, index: index,
                             from: currVal});
                 }
             }
         } else if(action.type == ACTION_TYPE.TOGGLE_VER_HINT) {
-            if(mouseInfo.inGridX && mouseInfo.inHintsY && mouseInfo.col == action.col) {
-                let hints = gridVerHints[mouseInfo.col];
-                let row = -1 - mouseInfo.row;
+            if(eventInfo.inGridX && eventInfo.inHintsY && eventInfo.col == action.col) {
+                let hints = gridVerHints[eventInfo.col];
+                let row = -1 - eventInfo.row;
                 let numHints = hints.length;
                 if(row < numHints) {
                     let index = numHints - row - 1;
                     let currVal = hints[index];
                     if(currVal == action.from)
                         addAction({type: ACTION_TYPE.TOGGLE_VER_HINT,
-                            col: mouseInfo.col, index: index,
+                            col: eventInfo.col, index: index,
                             from: currVal});
                 }
             }
