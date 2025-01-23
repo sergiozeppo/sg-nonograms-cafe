@@ -172,7 +172,7 @@ const sketch = (p, id) => {
                 let gridVal = grid[row][col];
                 let cellColor = cellColors[2 * ((Math.floor(row/5) + Math.floor(col/5)) % 2) + (row + col) % 2];
                 if(gridVal == CELL_MARK.BLACK) {
-                    cellColor = p.lerpColor(cellColor, p.color(0, 0, 75), 0.9);
+                    cellColor = p.lerpColor(cellColor, p.color(0, 0, 125), 0.9);
                 } else if(gridVal == CELL_MARK.WHITE) {
                     cellColor = p.lerpColor(cellColor, p.color(255, 255, 255), 0.5);
                 }
