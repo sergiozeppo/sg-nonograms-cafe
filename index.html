@@ -24,21 +24,27 @@
     <div class="m-4 container">
       <h1>RosimInc's Nonogram Café</h1>
 
-      <div id="buttons" class="my-2">
-        <button type="button" id="undoBtn" class="btn btn-primary">Undo</button>
-        <button type="button" id="redoBtn" class="btn btn-primary">Redo</button>
-        <button type="button" id="zoomInBtn" class="btn btn-primary">
-          Zoom In
-        </button>
-        <button type="button" id="zoomOutBtn" class="btn btn-primary">
-          Zoom Out
-        </button>
-        <button type="button" id="resetBtn" class="btn btn-primary">
-          Reset
-        </button>
-        <button type="button" id="createBtn" class="btn btn-secondary">
-          Create Your Own!
-        </button>
+      <div id="buttonContainer" class="my-2">
+        <div id="buttons" class="d-flex flex-wrap gap-2">
+          <button type="button" id="undoBtn" class="btn btn-primary">
+            Undo
+          </button>
+          <button type="button" id="redoBtn" class="btn btn-primary">
+            Redo
+          </button>
+          <button type="button" id="zoomInBtn" class="btn btn-primary">
+            Zoom In
+          </button>
+          <button type="button" id="zoomOutBtn" class="btn btn-primary">
+            Zoom Out
+          </button>
+          <button type="button" id="resetBtn" class="btn btn-primary">
+            Reset
+          </button>
+          <button type="button" id="createBtn" class="btn btn-secondary">
+            Create Your Own!
+          </button>
+        </div>
       </div>
 
       <div id="nonoDiv"></div>

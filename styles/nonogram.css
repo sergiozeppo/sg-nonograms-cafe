@@ -1,9 +1,27 @@
 body {
-    background-color: #2e2e2e; /* Dark grey color */
-    color: white; /* Ensures text is readable */
-    font-family: Arial, sans-serif; /* Sets a clean font */
+  background-color: #2e2e2e; /* Dark grey color */
+  color: white; /* Ensures text is readable */
+  font-family: Arial, sans-serif; /* Sets a clean font */
 }
 
 #msgDiv {
-    display: none;
+  display: none;
+}
+
+#buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+button {
+  padding: 10px 20px;
+  font-size: 1rem;
+  flex: 1 1 auto;
+}
+
+@media (min-width: 768px) {
+  button {
+    flex: 0 0 auto;
+  }
 }
