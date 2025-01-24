@@ -25,3 +25,12 @@ button {
     flex: 0 0 auto;
   }
 }
+
+.btn-primary:disabled,
+.btn-primary.disabled {
+  opacity: 1;
+  background-color: rgba(0, 0, 125, 0.9);
+  color: #ffffff;
+  cursor: not-allowed;
+  border: rgba(0, 0, 125, 0.9);
+}
