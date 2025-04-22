@@ -7,3 +7,22 @@ body {
 #msgDiv {
     display: none;
 }
+
+#buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    flex: 1 1 auto;
+  }
+  
+  @media (min-width: 768px) {
+    button {
+      flex: 0 0 auto;
+    }
+  }
+  
