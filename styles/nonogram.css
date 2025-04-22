@@ -26,3 +26,15 @@ body {
     }
   }
   
+  .btn-primary {
+    background-color: #0049a3; 
+    color: #ffffff;    
+    border-color: #0049a3; 
+  }
+ 
+  .btn-primary:disabled, .btn-primary.disabled {
+    background-color: #5C7A99; 
+    color: #ffffff;    
+    border-color: #5C7A99; 
+    opacity: 1;
+  }
