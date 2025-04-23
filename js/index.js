@@ -447,7 +447,7 @@ const sketch = (p, id) => {
     function addAction(action) {
         apply(action);
         actions.push(action);
-        if(action.type === ACTION_TYPE.MARK_CELL && action.to !== CELL_MARK.EMPTY) {
+        if(action.type === ACTION_TYPE.MARK_CELL && action.to !== CELL_MARK.WHITE && action.to !== CELL_MARK.EMPTY) {
             currentDragCount++;
             updateTooltip();
           }
