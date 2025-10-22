@@ -15,14 +15,16 @@
     <div class="m-4 container">
         <h1>RosimInc's Nonogram Café</h1>
 
-        <div id="buttons" class="my-2">
-            <button type="button" id="undoBtn" class="btn btn-primary">Undo</button>
-            <button type="button" id="redoBtn" class="btn btn-primary">Redo</button>
-            <button type="button" id="zoomInBtn" class="btn btn-primary">Zoom In</button>
-            <button type="button" id="zoomOutBtn" class="btn btn-primary">Zoom Out</button>
-            <button type="button" id="resetBtn" class="btn btn-primary">Reset</button>
-            <button type="button" id="createBtn" class="btn btn-secondary">Create Your Own!</button>
-        </div>
+        <div id="buttonContainer" class="my-2">
+            <div id="buttons" class="d-flex flex-wrap gap-2">
+              <button type="button" id="undoBtn" class="btn btn-primary">Undo</button>
+              <button type="button" id="redoBtn" class="btn btn-primary">Redo</button>
+              <button type="button" id="zoomInBtn" class="btn btn-primary">Zoom In</button>
+              <button type="button" id="zoomOutBtn" class="btn btn-primary">Zoom Out</button>
+              <button type="button" id="resetBtn" class="btn btn-primary">Reset</button>
+              <button type="button" id="createBtn" class="btn btn-secondary">Create Your Own!</button>
+            </div>
+          </div>
 
         <div id="nonoDiv"></div>
 
@@ -32,7 +34,8 @@
             <h3>Instructions</h3>
             <ul>
                 <li>Fill squares so that groups of squares match the hints of that row/column</li>
-                <li>Groups must be separated by one or more empty squares</li><br>
+                <li>Groups must be separated by one or more empty squares</li>
+                <li>Once you fill all the cells correctly, the playing field will turn green, and below it you will see a secret message.</li><br>
                 <li>Click to fill a cell</li>
                 <li>Right-click to mark with an X that it cannot be filled</li>
                 <li>Click or right-click again to remove the marking</li>
