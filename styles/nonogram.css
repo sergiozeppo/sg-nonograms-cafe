@@ -8,6 +8,19 @@ body {
     display: none;
 }
 
+.cell-counter-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    z-index: 5;
+}
 #buttons {
     display: flex;
     flex-wrap: wrap;

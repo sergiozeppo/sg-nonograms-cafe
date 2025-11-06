@@ -54,6 +54,10 @@ const sketch = (p, id) => {
     let movesRedo = [];
     let ended = false;
 
+    let currentDragCount = 0;
+    let tooltip = document.querySelector('.cell-counter-tooltip');
+    let isDragging = false;
+
     p.setup = function() {
         canvas = p.createCanvas(500, 300);
         canvas.parent(document.getElementById('nonoDiv'));
@@ -207,6 +211,13 @@ const sketch = (p, id) => {
             p.line(col * cellSize, -maxVerHints * cellSize,
                 col * cellSize, numRows * cellSize);
         }
+
+        canvas.elt.addEventListener('mousemove', (e) => updateTooltip(e));
+        canvas.elt.addEventListener('touchmove', (e) => {
+            if(e.touches.length === 1) {
+                updateTooltip(e.touches[0]);
+            }
+        });
     }
 
     function drawHorHints() {
@@ -428,16 +439,40 @@ const sketch = (p, id) => {
     function setAction(action, eventInfo = null) {
         clearActions();
         actionEvent = eventInfo;
+        currentDragCount = 0;
+        isDragging = true;
         addAction(action);
     }
 
     function addAction(action) {
         apply(action);
         actions.push(action);
+        if(action.type === ACTION_TYPE.MARK_CELL && action.to !== CELL_MARK.WHITE && action.to !== CELL_MARK.EMPTY) {
+            currentDragCount++;
+            updateTooltip();
+          }
     }
+
+    function updateTooltip(event) {
+        if(isDragging && currentDragCount > 0) {
+          tooltip.style.opacity = '1';
+          tooltip.textContent = currentDragCount;
+          
+          if(event) {
+            tooltip.style.left = `${event.clientX + 15}px`;
+            tooltip.style.top = `${event.clientY + 15}px`;
+          }
+        } else {
+          tooltip.style.opacity = '0';
+        }
+      }
 
     function clearActions() {
         actionEvent = null;
+        isDragging = false;
+        currentDragCount = 0;
+        updateTooltip();
+        
         if(actions && actions.length > 0) {
             addUndo(actions);
         }
